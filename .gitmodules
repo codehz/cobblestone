@@ -1,0 +1,9 @@
+[submodule "deps/funchook"]
+	path = deps/funchook
+	url = git@github.com:minecraft-linux/funchook
+[submodule "deps/elf-parser/src"]
+	path = deps/elf-parser/src
+	url = git@github.com:finixbit/elf-parser
+[submodule "deps/wsrpc"]
+	path = deps/wsrpc
+	url = git@github.com:codehz/wsrpc
