@@ -20,7 +20,9 @@ TInstanceHook(std::string, _ZNK4Core15FilePathManager15getUserDataPathB5cxx11Ev,
 
 TInstanceHook(std::string, _ZNK4Core15FilePathManager13getWorldsPathB5cxx11Ev, Core::FilePathManager) { return "data/worlds"; }
 
-THook(std::string, _ZN11AppPlatform15getSettingsPathB5cxx11Ev, void *) { return "data/minecraftpe/"; }
+THook(std::string, _ZN11AppPlatform15getSettingsPathB5cxx11Ev, void *) { return "data/"; }
+
+THook(std::string, _ZNK11AppPlatform14getLoggingPathB5cxx11Ev, void *) { return "data/"; }
 
 THook(std::string const &, _ZNK17AppPlatform_linux19getPlatformTempPathB5cxx11Ev, void *) {
   static std::string temp = "data/";

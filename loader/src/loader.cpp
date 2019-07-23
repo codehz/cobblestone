@@ -30,7 +30,8 @@ void *modloader_load_mod(const char *path) { return loaderImpl.loadMod(path); }
 void modloader_load_mods_from_directory(const char *path) { loaderImpl.loadModsFromDirectory(path); }
 
 void modloader_iterate_mods(modloader_foreach_fn cb, void *userdata) {
-  for (void *v : loaderImpl.mods) cb(v, userdata);
+  for (void *v : loaderImpl.mods)
+    cb(v, userdata);
 }
 }
 
@@ -43,24 +44,28 @@ void *ModLoader::loadMod(std::string const &path) { return loaderImpl.loadMod(pa
 void ModLoader::loadModsFromDirectory(std::string const &path) { loaderImpl.loadModsFromDirectory(path); }
 
 void ModLoader::forEachMod(std::function<void(void *)> cb) {
-  for (void *v : loaderImpl.mods) cb(v);
+  for (void *v : loaderImpl.mods)
+    cb(v);
 }
 
 std::string ModLoaderImpl::findLib(std::string const &name) {
   for (fs::path const &dir : libDirs) {
     auto fullPath = dir / name;
-    if (fs::exists(fullPath)) return fullPath;
+    if (fs::exists(fullPath))
+      return fullPath;
   }
   return std::string();
 }
 
 void *ModLoaderImpl::loadLib(std::string const &path) {
   auto e = knownLoadedLibs.find(path);
-  if (e != knownLoadedLibs.end()) return e->second;
+  if (e != knownLoadedLibs.end())
+    return e->second;
 
-  auto iof             = path.rfind('/');
+  auto iof = path.rfind('/');
   std::string fullPath = path;
-  if (iof == std::string::npos) fullPath = findLib(path);
+  if (iof == std::string::npos)
+    fullPath = findLib(path);
 
   if (!fullPath.empty()) {
     for (std::string const &dep : depelf(fullPath))
@@ -78,7 +83,7 @@ void *ModLoaderImpl::loadLib(std::string const &path) {
     Log::error("ModLoader", "Failed to load %s", dlerror());
     return nullptr;
   }
-  std::string filename      = iof != std::string::npos ? path.substr(iof + 1) : path;
+  std::string filename = iof != std::string::npos ? path.substr(iof + 1) : path;
   knownLoadedLibs[filename] = ret;
 
   static std::set<bool (*)(char const *)> patches;
@@ -88,16 +93,20 @@ void *ModLoaderImpl::loadLib(std::string const &path) {
     patches.emplace(do_patch);
     size_t count = 0, ignored = 0;
     symelf(fullPath.c_str(), [&](std::string const &symname, std::string const &section) {
-      if (section != ".patch" && !do_patch(symname.data())) return;
+      if (section != ".patch" && !do_patch(symname.data()))
+        return;
       void *src = dlsym(RTLD_DEFAULT, symname.data());
       if (src) {
         void *dst = dlsym(ret, symname.data());
-        if (dst == src) return;
+        if (dst == src)
+          return;
         void *temp;
         auto result = modloader_hook(src, dst, &temp);
-        if (!result) throw std::runtime_error("Failed to patch: " + symname);
+        if (!result)
+          throw std::runtime_error("Failed to patch: " + symname);
         count++;
-        if (section == ".patch") Log::verbose("ModLoader/patch", "Patched(explicitly) %s", symname.data());
+        if (section == ".patch")
+          Log::verbose("ModLoader/patch", "Patched(explicitly) %s", symname.data());
       } else if (section == ".patch") {
         throw std::runtime_error("Cannot found to patched symbol(explicitly): " + symname);
       } else {
@@ -111,7 +120,8 @@ void *ModLoaderImpl::loadLib(std::string const &path) {
 
 void *ModLoaderImpl::loadMod(std::string const &path) {
   void *ret = loadLib(path);
-  if (ret) mods.insert(ret);
+  if (ret)
+    mods.insert(ret);
   return ret;
 }
 
@@ -124,9 +134,11 @@ void ModLoaderImpl::loadModsFromDirectory(std::string const &path) {
     return;
   }
   while ((ent = readdir(dir)) != nullptr) {
-    if (ent->d_name[0] == '.') continue;
+    if (ent->d_name[0] == '.')
+      continue;
     fs::path fileName(ent->d_name);
-    if (fileName.extension() == ".so" || fileName.extension() == ".mod") loadMod(fileName);
+    if (fileName.extension() == ".so" || fileName.extension() == ".mod")
+      loadMod(fileName);
   }
   closedir(dir);
   Log::info("ModLoader", "Loaded %li mods", mods.size());
