@@ -14,6 +14,10 @@ struct PropertiesSettings {
 
   bool getExperimentalMode() const { return parseBoolValue(getCustomProperty("experimental-mode")); }
 
+  bool getEducationFeatures() const { return parseBoolValue(getCustomProperty("education-features")); }
+
+  bool getEducationMode() const { return parseBoolValue(getCustomProperty("education-mode")); }
+
   bool getOverrideSavedSettings() const { return parseBoolValue(getCustomProperty("override-saved-settings")); }
 };
 
@@ -58,3 +62,12 @@ TClasslessInstanceHook(void *, _ZN8GameRule17setRequiresCheatsEb, bool flag) { r
 TClasslessInstanceHook(void *, _ZN8GameRule17setAllowInCommandEb, bool flag) { return original(this, true); }
 
 TClasslessInstanceHook(bool, _ZNK15CommandRegistry21requiresCheatsEnabledERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE) { return false; }
+
+TClasslessInstanceHook(bool, _ZNK9LevelData23isEducationEditionLevelEv) { return refs<PropertiesSettings>->getEducationMode(); }
+TClasslessInstanceHook(bool, _ZNK13LevelSettings23isEducationEditionWorldEv) { return refs<PropertiesSettings>->getEducationMode(); }
+TClasslessInstanceHook(bool, _ZNK17ConnectionRequest9isEduModeEv) { return refs<PropertiesSettings>->getEducationMode(); }
+
+TClasslessInstanceHook(bool, _ZNK9LevelData24educationFeaturesEnabledEv) { return refs<PropertiesSettings>->getEducationFeatures(); }
+TClasslessInstanceHook(bool, _ZNK13LevelSettings24educationFeaturesEnabledEv) { return refs<PropertiesSettings>->getEducationFeatures(); }
+
+TClasslessInstanceHook(bool, _ZNK16EducationOptions17_isFeatureEnabledE16EducationFeature, int feat) { return refs<PropertiesSettings>->getEducationFeatures(); }
