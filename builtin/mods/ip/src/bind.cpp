@@ -15,11 +15,11 @@ struct PropertiesSettings {
   std::string const &getCustomProperty(std::string const &) const;
 
   std::string const &getServerIP() const { return getCustomProperty("server-ip"); }
-  short getServerPort() const;
+  unsigned short getServerPort() const;
   std::string const &getServerPortExtra() const { return getCustomProperty("server-port-extra"); }
 
   std::string const &getServerIPv6() const { return getCustomProperty("server-ipv6"); }
-  short getServerPortv6() const;
+  unsigned short getServerPortv6() const;
   std::string const &getServerPortv6Extra() const { return getCustomProperty("server-portv6-extra"); }
 };
 
