@@ -4,3 +4,5 @@ test
 .github
 .vscode
 compile_commands.json
+rootfs
+dist*
