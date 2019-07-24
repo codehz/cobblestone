@@ -213,7 +213,7 @@ static JSValue registerCommand(JSContext *ctx, JSValueConst this_val, int argc, 
       else if (ptype == "string")
         mvt.defs.emplace_back(commonParameter<std::string>(pname));
       else if (ptype == "int")
-        mvt.defs.emplace_back(commonParameter<std::string>(pname));
+        mvt.defs.emplace_back(commonParameter<int>(pname));
       else if (ptype == "float")
         mvt.defs.push_back(commonParameter<float>(pname));
       else if (ptype == "bool")
