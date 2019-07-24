@@ -9,7 +9,8 @@ function gen() {
 list=($(gen ../build/cobblestone))
 list+=($(gen ../test/game/bedrock_server))
 list+=(/usr/lib/lib{resolv,nss_{dns,files,myhostname,mymachines}}.so.2)
-for entry in ${list[@]//*libCrypto.so}; do
+uniq=($(printf "%s\n" "${list[@]//*libCrypto.so}" | sort -u | tr '\n' ' '))
+for entry in ${uniq[@]}; do
     install -D "$entry" "./$entry"
     echo install "$entry"
 done

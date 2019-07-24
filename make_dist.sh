@@ -14,5 +14,4 @@ for mod in build/builtin/*.mod; do
 done
 
 cd rootfs
-tar cvf ../dist.tar *
-gzip -9 ../dist.tar
+tar pcf - * | pv -s $(du -sb . | awk '{print $1}') | gzip -9 > ../dist.tar.gz
