@@ -6,32 +6,32 @@
 
 #define IMPL(name) bool name::_serialize(ScriptEngine &, ScriptApi::ScriptObjectHandle &handle) const
 #define PREPARE_OBJECT(obj) QCHECK(scriptengine->createObject(obj))
-#define NEW_OBJECT(name)                                                                                                                             \
-  CLEANUP(QJS_FreeHandle) ScriptApi::ScriptObjectHandle name;                                                                                        \
+#define NEW_OBJECT(name)                                                                                                                                                                               \
+  autohandle name;                                                                                                                                                                                     \
   PREPARE_OBJECT(name)
 
-#define FOR_ENTITY(name, var)                                                                                                                        \
-  ({                                                                                                                                                 \
-    NEW_OBJECT(temp);                                                                                                                                \
-    if (scriptengine->helpDefineActor(var, temp)) {                                                                                                  \
-      QCHECK(scriptengine->setMember(handle, name, temp.transfer()));                                                                                \
-    } else {                                                                                                                                         \
-      QCHECK(scriptengine->setMember(handle, name, JS_NULL));                                                                                        \
-    }                                                                                                                                                \
+#define FOR_ENTITY(name, var)                                                                                                                                                                          \
+  ({                                                                                                                                                                                                   \
+    NEW_OBJECT(temp);                                                                                                                                                                                  \
+    if (scriptengine->helpDefineActor(var, temp)) {                                                                                                                                                    \
+      QCHECK(scriptengine->setMember(handle, name, temp.transfer()));                                                                                                                                  \
+    } else {                                                                                                                                                                                           \
+      QCHECK(scriptengine->setMember(handle, name, JS_NULL));                                                                                                                                          \
+    }                                                                                                                                                                                                  \
   })
 
-#define FOR_ITEM(name, var)                                                                                                                          \
-  ({                                                                                                                                                 \
-    NEW_OBJECT(temp);                                                                                                                                \
-    QCHECK(scriptengine->helpDefineItemStack(var, temp));                                                                                            \
-    QCHECK(scriptengine->setMember(handle, name, temp.transfer()));                                                                                  \
+#define FOR_ITEM(name, var)                                                                                                                                                                            \
+  ({                                                                                                                                                                                                   \
+    NEW_OBJECT(temp);                                                                                                                                                                                  \
+    QCHECK(scriptengine->helpDefineItemStack(var, temp));                                                                                                                                              \
+    QCHECK(scriptengine->setMember(handle, name, temp.transfer()));                                                                                                                                    \
   })
 
-#define FOR_POS(name, var)                                                                                                                           \
-  ({                                                                                                                                                 \
-    NEW_OBJECT(temp);                                                                                                                                \
-    QCHECK(scriptengine->helpDefinePosition(var, temp));                                                                                             \
-    QCHECK(scriptengine->setMember(handle, name, temp.transfer()));                                                                                  \
+#define FOR_POS(name, var)                                                                                                                                                                             \
+  ({                                                                                                                                                                                                   \
+    NEW_OBJECT(temp);                                                                                                                                                                                  \
+    QCHECK(scriptengine->helpDefinePosition(var, temp));                                                                                                                                               \
+    QCHECK(scriptengine->setMember(handle, name, temp.transfer()));                                                                                                                                    \
   })
 
 IMPL(ScriptServerActorAcquiredItemEvent) {

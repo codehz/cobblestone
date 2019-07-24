@@ -4,13 +4,13 @@ void PolicyManager::dispatch(BasePolicy &ptr) {
   auto &name       = ptr.getName();
   auto [low, high] = handlers.equal_range(name);
   if (low != high) {
-    CLEANUP(QJS_FreeValue) auto data = ptr.build();
+    autoval data = ptr.build();
     for (auto it = low; it != high; it++) {
       JSValue temp[] = {
         JS_DupValue(js_context, data),
         JS_NewBool(js_context, ptr.result),
       };
-      CLEANUP(QJS_FreeValue) auto ret = JS_Call(js_context, it->second, JS_UNDEFINED, 2, temp);
+      autoval ret = JS_Call(js_context, it->second, JS_UNDEFINED, 2, temp);
       if (handle_exception(js_context, "PolicyManager::dispatch") && JS_IsBool(ret)) scriptengine->getValue(ret, ptr.result);
     }
   }

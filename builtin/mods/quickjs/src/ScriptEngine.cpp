@@ -9,14 +9,10 @@
 
 #include "MyScriptCommandOrigin.hpp"
 
-THook(void, _ZN9__gnu_cxx13new_allocatorIN9ScriptApi18ScriptObjectHandleEE7destroyIS2_EEvPT_, ScriptApi::ScriptObjectHandle *self) {
-  self->release();
-}
+THook(void, _ZN9__gnu_cxx13new_allocatorIN9ScriptApi18ScriptObjectHandleEE7destroyIS2_EEvPT_, ScriptApi::ScriptObjectHandle *self) { self->release(); }
 THook(void, _ZNSt12_Destroy_auxILb1EE9__destroyIPN9ScriptApi18ScriptObjectHandleEEEvT_S5_, ScriptApi::ScriptObjectHandle *self) { self->release(); }
 TClasslessInstanceHook(bool, _ZN12ScriptEngine18isScriptingEnabledEv) { return true; }
-THook(ScriptApi::QuickJSInterface *, _ZSt11make_uniqueIN9ScriptApi20EmptyScriptInterfaceEJEENSt9_MakeUniqIT_E15__single_objectEDpOT0_) {
-  return ifce = new ScriptApi::QuickJSInterface();
-}
+THook(ScriptApi::QuickJSInterface *, _ZSt11make_uniqueIN9ScriptApi20EmptyScriptInterfaceEJEENSt9_MakeUniqIT_E15__single_objectEDpOT0_) { return ifce = new ScriptApi::QuickJSInterface(); }
 THook(void, _ZNSt10unique_ptrIN9ScriptApi23ScriptLanguageInterfaceESt14default_deleteIS1_EE5resetEPS1_) { delete ifce; }
 THook(void, _ZNSt10unique_ptrIN9ScriptApi23ScriptLanguageInterfaceESt14default_deleteIS1_EED2Ev) {}
 THook(void *, _ZNKSt10unique_ptrIN9ScriptApi23ScriptLanguageInterfaceESt14default_deleteIS1_EEptEv) { return ifce; }
@@ -25,7 +21,7 @@ THook(bool, _ZN12ScriptEngine15_getVersionInfoERKN9ScriptApi18ScriptObjectHandle
 
 INLINE void call_lifetime_hook(char const *name) {
   for (auto &system : ifce->systems) {
-    CLEANUP(QJS_FreeValue) auto func = JS_GetPropertyStr(js_context, system, name);
+    autoval func = JS_GetPropertyStr(js_context, system, name);
     if (JS_IsFunction(js_context, func)) {
       JS_FreeValue(js_context, JS_Call(js_context, func, system, 0, nullptr));
       handle_exception(js_context, name);
@@ -37,18 +33,15 @@ TInstanceHook(void, _ZN12ScriptEngine24_processSystemInitializeEv, ScriptEngine)
 TInstanceHook(void, _ZN12ScriptEngine20_processSystemUpdateEv, ScriptEngine) { call_lifetime_hook("update"); }
 TInstanceHook(void, _ZN12ScriptEngine22_processSystemShutdownEv, ScriptEngine) { call_lifetime_hook("shutdown"); }
 
-TInstanceHook(
-    void,
-    _ZN12ScriptEngine22_callAllScriptCallbackERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt6vectorIN9ScriptApi18ScriptObjectHandleESaISA_EERSA_,
-    ScriptEngine) {}
+TInstanceHook(void, _ZN12ScriptEngine22_callAllScriptCallbackERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt6vectorIN9ScriptApi18ScriptObjectHandleESaISA_EERSA_, ScriptEngine) {}
 
 TClasslessInstanceHook(void, _ZN23ScriptEngineWithContextI19ScriptServerContextE20_processCommandQueueEv) {
   while (!ifce->commandPendingList.empty()) {
     auto &thunk = ifce->commandPendingList.front();
-    auto &level   = *(ServerLevel *)refs<ScriptServerContext>->level;
-    auto origin   = std::make_unique<MyScriptCommandOrigin>(level, *scriptengine, thunk.second);
+    auto &level = *(ServerLevel *)refs<ScriptServerContext>->level;
+    auto origin = std::make_unique<MyScriptCommandOrigin>(level, *scriptengine, thunk.second);
     auto commands = refs<ScriptServerContext>->minecraft->getCommands();
-    auto context  = std::make_shared<CommandContext>(thunk.first, std::move(origin), CommandVersion::CurrentVersion);
+    auto context = std::make_shared<CommandContext>(thunk.first, std::move(origin), CommandVersion::CurrentVersion);
     commands->executeCommand(context, false);
     ifce->commandPendingList.pop();
   }
@@ -56,7 +49,8 @@ TClasslessInstanceHook(void, _ZN23ScriptEngineWithContextI19ScriptServerContextE
 TClasslessInstanceHook(void, _ZN23ScriptEngineWithContextI19ScriptServerContextE28_processCommandCallbackQueueEv) {
   JSContext *ctx;
   auto err = JS_ExecutePendingJob(js_runtime, &ctx);
-  if (err < 0) handle_exception(ctx, "PendingJob");
+  if (err < 0)
+    handle_exception(ctx, "PendingJob");
 }
 
 bool ScriptEngine::initialize() {
@@ -66,21 +60,24 @@ bool ScriptEngine::initialize() {
   QCHECK(registerGlobalAPI("server", interface, handle));
   QCHECK(((MinecraftServerScriptEngine *)this)->_registerSystemObjects(handle));
   scriptengine->setupInterface();
-  for (auto &hook : init_hooks) hook();
+  for (auto &hook : init_hooks)
+    hook();
   return false;
 }
 
 bool ScriptEngine::helpDefineVec3(ScriptApi::ScriptObjectHandle &target, const std::string &key, const Vec3 &value) {
   ScriptApi::ScriptObjectHandle temp = JS_NewArray(js_context);
-  for (int i = 0; i < 3; i++) { JS_SetPropertyUint32(js_context, temp, i, JS_NewFloat64(js_context, value[i])); }
+  for (int i = 0; i < 3; i++) {
+    JS_SetPropertyUint32(js_context, temp, i, JS_NewFloat64(js_context, value[i]));
+  }
   return JS_SetPropertyStr(js_context, target, key.data(), temp);
 }
 
 bool ScriptEngine::helpGetVec3(const ScriptApi::ScriptObjectHandle &source, const std::string &key, Vec3 &value) {
-  CLEANUP(QJS_FreeValue) auto temp = JS_GetPropertyStr(js_context, source, key.data());
+  autoval temp = JS_GetPropertyStr(js_context, source, key.data());
   if (JS_IsArray(js_context, temp)) {
     for (int i = 0; i < 3; i++) {
-      CLEANUP(QJS_FreeValue) auto val = JS_GetPropertyUint32(js_context, temp, i);
+      autoval val = JS_GetPropertyUint32(js_context, temp, i);
       if (!JS_IsNumber(val)) {
         getScriptReportQueue().addWarning("Wrong vec3");
         return false;
@@ -98,18 +95,27 @@ bool ScriptEngine::helpGetVec3(const ScriptApi::ScriptObjectHandle &source, cons
 bool ScriptEngine::serializeJsonToScriptObjectHandle(ScriptApi::ScriptObjectHandle &handle, Json::Value const &json) {
   handle.release();
   switch (json.type()) {
-  case Json::nullValue: handle = JS_NULL; break;
-  case Json::intValue: [[fallthrough]];
-  case Json::uintValue: handle = JS_NewInt64(js_context, json.asInt64(-1)); break;
-  case Json::realValue: handle = JS_NewFloat64(js_context, json.asDouble(0.0)); break;
-  case Json::booleanValue: handle = JS_NewBool(js_context, json.asBool(false)); break;
+  case Json::nullValue:
+    handle = JS_NULL;
+    break;
+  case Json::intValue:
+    [[fallthrough]];
+  case Json::uintValue:
+    handle = JS_NewInt64(js_context, json.asInt64(-1));
+    break;
+  case Json::realValue:
+    handle = JS_NewFloat64(js_context, json.asDouble(0.0));
+    break;
+  case Json::booleanValue:
+    handle = JS_NewBool(js_context, json.asBool(false));
+    break;
   case Json::stringValue: {
     auto temp = json.asString("");
-    handle    = JS_NewStringLen(js_context, temp.data(), temp.length());
+    handle = JS_NewStringLen(js_context, temp.data(), temp.length());
     break;
   }
   case Json::objectValue: {
-    handle   = JS_NewObject(js_context);
+    handle = JS_NewObject(js_context);
     auto end = json.end();
     for (auto it = json.begin(); it != end; ++it) {
       ScriptApi::ScriptObjectHandle value;
@@ -137,9 +143,14 @@ bool ScriptEngine::deserializeScriptObjectHandleToJson(ScriptApi::ScriptObjectHa
   ScriptApi::ScriptObjectType type;
   QCHECK(getHandleType(handle, type));
   switch (type) {
-  case ScriptApi::ScriptObjectType::T_UNDEFINED: [[fallthrough]];
-  case ScriptApi::ScriptObjectType::T_NULL: json = Json::Value::null; break;
-  case ScriptApi::ScriptObjectType::T_BOOL: json = Json::Value(JS_ToBool(js_context, handle)); break;
+  case ScriptApi::ScriptObjectType::T_UNDEFINED:
+    [[fallthrough]];
+  case ScriptApi::ScriptObjectType::T_NULL:
+    json = Json::Value::null;
+    break;
+  case ScriptApi::ScriptObjectType::T_BOOL:
+    json = Json::Value(JS_ToBool(js_context, handle));
+    break;
   case ScriptApi::ScriptObjectType::T_NUMBER: {
     if (JS_IsInteger(handle)) {
       int64_t temp = 0;
@@ -157,25 +168,25 @@ bool ScriptEngine::deserializeScriptObjectHandleToJson(ScriptApi::ScriptObjectHa
   }
   case ScriptApi::ScriptObjectType::T_STRING: {
     int len;
-    CLEANUP(QJS_FreeCString) auto str = JS_ToCStringLen(js_context, &len, handle, false);
-    json                              = Json::Value(std::string{ str, (size_t)len });
+    autostr str = JS_ToCStringLen(js_context, &len, handle, false);
+    json = Json::Value(std::string{str, (size_t)len});
     break;
   }
   case ScriptApi::ScriptObjectType::T_OBJECT: {
-    CLEANUP(QJS_FreeValue) auto global  = JS_GetGlobalObject(js_context);
-    CLEANUP(QJS_FreeValue) auto reflect = JS_GetPropertyStr(js_context, global, "Reflect");
-    CLEANUP(QJS_FreeValue) auto ownKeys = JS_GetPropertyStr(js_context, reflect, "ownKeys");
-    CLEANUP(QJS_FreeValue) auto arr     = JS_Call(js_context, ownKeys, reflect, 1, (JSValue *)&handle);
+    autoval global = JS_GetGlobalObject(js_context);
+    autoval reflect = JS_GetPropertyStr(js_context, global, "Reflect");
+    autoval ownKeys = JS_GetPropertyStr(js_context, reflect, "ownKeys");
+    autoval arr = JS_Call(js_context, ownKeys, reflect, 1, (JSValue *)&handle);
     HANDLE_EXCEPTION();
-    CLEANUP(QJS_FreeValue) auto propLen = JS_GetPropertyStr(js_context, arr, "length");
-    json                                = Json::Value(Json::objectValue);
+    autoval propLen = JS_GetPropertyStr(js_context, arr, "length");
+    json = Json::Value(Json::objectValue);
     for (int32_t i = 0; i < JS_VALUE_GET_INT(propLen); i++) {
       Json::Value temp;
-      CLEANUP(QJS_FreeValue) auto key = JS_GetPropertyUint32(js_context, arr, i);
+      autoval key = JS_GetPropertyUint32(js_context, arr, i);
       if (JS_IsString(key)) {
-        int keyLen                           = 0;
-        CLEANUP(QJS_FreeCString) auto keyStr = JS_ToCStringLen(js_context, &keyLen, key, false);
-        CLEANUP(QJS_FreeValue) auto value    = JS_GetPropertyStr(js_context, handle, keyStr);
+        int keyLen = 0;
+        autostr keyStr = JS_ToCStringLen(js_context, &keyLen, key, false);
+        autoval value = JS_GetPropertyStr(js_context, handle, keyStr);
         Json::Value val_temp;
         deserializeScriptObjectHandleToJson(value, val_temp);
         json[keyStr] = val_temp;
@@ -184,10 +195,10 @@ bool ScriptEngine::deserializeScriptObjectHandleToJson(ScriptApi::ScriptObjectHa
     break;
   }
   case ScriptApi::ScriptObjectType::T_ARRAY: {
-    CLEANUP(QJS_FreeValue) auto propLen = JS_GetPropertyStr(js_context, handle, "length");
-    json                                = Json::Value(Json::arrayValue);
+    autoval propLen = JS_GetPropertyStr(js_context, handle, "length");
+    json = Json::Value(Json::arrayValue);
     for (int32_t i = 0; i < JS_VALUE_GET_INT(propLen); i++) {
-      CLEANUP(QJS_FreeValue) auto value = JS_GetPropertyUint32(js_context, handle, i);
+      autoval value = JS_GetPropertyUint32(js_context, handle, i);
       Json::Value val_temp;
       deserializeScriptObjectHandleToJson(value, val_temp);
       json[i] = val_temp;
@@ -198,9 +209,7 @@ bool ScriptEngine::deserializeScriptObjectHandleToJson(ScriptApi::ScriptObjectHa
   return true;
 }
 
-std::unordered_map<std::string, EventInfo> &ScriptEngine::getEventInfoMap() {
-  return *union_cast<std::unordered_map<std::string, EventInfo> *>(union_cast<int>(this) + 344);
-}
+std::unordered_map<std::string, EventInfo> &ScriptEngine::getEventInfoMap() { return *union_cast<std::unordered_map<std::string, EventInfo> *>(union_cast<int>(this) + 344); }
 
 std::unordered_map<std::string, std::vector<ScriptApi::EventTracking>> &ScriptEngine::getEventTrackings() {
   return *union_cast<std::unordered_map<std::string, std::vector<ScriptApi::EventTracking>> *>(union_cast<int>(this) + 56);

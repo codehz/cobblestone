@@ -15,8 +15,9 @@
 
 bool ScriptEngineWithContext<ScriptServerContext>::fireEvent(const ScriptEventData &data) {
   EventInfo info;
-  if (!getEventTrackings().contains(data.getName())) return true;
-  CLEANUP(QJS_FreeHandle) ScriptApi::ScriptObjectHandle handle;
+  if (!getEventTrackings().contains(data.getName()))
+    return true;
+  autohandle handle;
   if (!data.serialize(*scriptengine, info, handle)) {
     getScriptReportQueue().addError("failed to serialize event: " + data.getName());
     return false;
@@ -25,9 +26,7 @@ bool ScriptEngineWithContext<ScriptServerContext>::fireEvent(const ScriptEventDa
   return true;
 }
 
-bool ScriptEngineWithContext<ScriptServerContext>::onEventReceivedFromScriptEngine(ScriptApi::ScriptVersionInfo const &version,
-                                                                                   std::string const &name,
-                                                                                   ScriptApi::ScriptObjectHandle const &handle) {
+bool ScriptEngineWithContext<ScriptServerContext>::onEventReceivedFromScriptEngine(ScriptApi::ScriptVersionInfo const &version, std::string const &name, ScriptApi::ScriptObjectHandle const &handle) {
   auto &event = getScriptEventCoordinator();
   ScriptApi::ScriptObjectHandle data;
   QCHECK(scriptengine->getMember(handle, "data", data));
@@ -48,8 +47,7 @@ bool ScriptEngineWithContext<ScriptServerContext>::onEventReceivedFromScriptEngi
   return success;
 }
 
-bool ScriptEngineWithContext<ScriptServerContext>::createEventData(ScriptApi::ScriptVersionInfo const &version, std::string const &name,
-                                                                   ScriptApi::ScriptObjectHandle &handle) {
+bool ScriptEngineWithContext<ScriptServerContext>::createEventData(ScriptApi::ScriptVersionInfo const &version, std::string const &name, ScriptApi::ScriptObjectHandle &handle) {
   bool success = false;
   if (_validateObjectIdentifier(false, name)) {
     ScriptApi::ScriptObjectHandle temp;
@@ -74,8 +72,7 @@ bool ScriptEngineWithContext<ScriptServerContext>::createEventData(ScriptApi::Sc
   return success;
 }
 
-bool ScriptEngineWithContext<ScriptServerContext>::createComponent(ScriptApi::ScriptVersionInfo const &version,
-                                                                   ScriptApi::ScriptObjectHandle const &source, std::string const &name,
+bool ScriptEngineWithContext<ScriptServerContext>::createComponent(ScriptApi::ScriptVersionInfo const &version, ScriptApi::ScriptObjectHandle const &source, std::string const &name,
                                                                    ScriptApi::ScriptObjectHandle &handle) {
   ScriptApi::ScriptObjectHandle temp;
   bool success = false;
@@ -91,20 +88,21 @@ bool ScriptEngineWithContext<ScriptServerContext>::createComponent(ScriptApi::Sc
     ScriptBinderComponentTemplate::build(name, std::move(temp))->serialize(*scriptengine, handle);
     success = handle_exception(js_context, "createComponent");
   }
-  if (!success) { getScriptReportQueue().addError("createComponent"); }
+  if (!success) {
+    getScriptReportQueue().addError("createComponent");
+  }
   return success;
 }
 
-bool ScriptEngineWithContext<ScriptServerContext>::applyComponentChanges(ScriptApi::ScriptVersionInfo const &version,
-                                                                         ScriptApi::ScriptObjectHandle const &source,
+bool ScriptEngineWithContext<ScriptServerContext>::applyComponentChanges(ScriptApi::ScriptVersionInfo const &version, ScriptApi::ScriptObjectHandle const &source,
                                                                          ScriptApi::ScriptObjectHandle const &component) {
   bool success = false;
   if (auto binder = getScriptBinderTemplateController()->deserialize(*this, component); binder) {
     auto identifier_component = binder->getComponent<ScriptIdentifierBinderComponent>();
-    auto component_binder     = binder->getComponent<ScriptComponentBinderComponent>();
+    auto component_binder = binder->getComponent<ScriptComponentBinderComponent>();
     if (identifier_component && component_binder) {
       auto identifier = identifier_component->getIdentifier();
-      auto data       = component_binder->getData();
+      auto data = component_binder->getData();
       if (!getScriptOnlyComponents().isDefined(identifier)) {
         if (auto factory = getScriptTemplateFactory().components.get(identifier).lock(); factory) {
           success = factory->applyComponentTo(version, *this, getScriptServerContext(), source, data);
@@ -114,12 +112,13 @@ bool ScriptEngineWithContext<ScriptServerContext>::applyComponentChanges(ScriptA
       }
     }
   }
-  if (!success) { getScriptReportQueue().addError("applyComponentChanges"); }
+  if (!success) {
+    getScriptReportQueue().addError("applyComponentChanges");
+  }
   return success;
 }
 
-bool ScriptEngineWithContext<ScriptServerContext>::getComponent(ScriptApi::ScriptVersionInfo const &version,
-                                                                ScriptApi::ScriptObjectHandle const &source, std::string const &name,
+bool ScriptEngineWithContext<ScriptServerContext>::getComponent(ScriptApi::ScriptVersionInfo const &version, ScriptApi::ScriptObjectHandle const &source, std::string const &name,
                                                                 ScriptApi::ScriptObjectHandle &target) {
   ScriptApi::ScriptObjectHandle handle;
   if (getScriptOnlyComponents().isDefined(name)) {
@@ -150,15 +149,15 @@ bool ScriptEngineWithContext<ScriptServerContext>::getComponent(ScriptApi::Scrip
   return true;
 }
 
-bool ScriptEngineWithContext<ScriptServerContext>::getBlock(ScriptApi::ScriptVersionInfo const &version, ScriptApi::ScriptObjectHandle &target,
-                                                            BlockPos const &pos, ScriptApi::ScriptObjectHandle const &ticking_area) {
+bool ScriptEngineWithContext<ScriptServerContext>::getBlock(ScriptApi::ScriptVersionInfo const &version, ScriptApi::ScriptObjectHandle &target, BlockPos const &pos,
+                                                            ScriptApi::ScriptObjectHandle const &ticking_area) {
   if (auto binder = getScriptBinderTemplateController()->deserialize(*this, ticking_area); binder) {
     auto level_ticking = binder->getComponent<ScriptLevelAreaBinderComponent>();
     auto actor_ticking = binder->getComponent<ScriptActorAreaBinderComponent>();
     if (auto source = _helpGetBlockSourceFromBinder(*getScriptServerContext().level, level_ticking, actor_ticking); source) {
       if (source->hasBlock(pos)) {
-        auto &block                                                = source->getBlock(pos);
-        CLEANUP(QJS_FreeHandle) ScriptApi::ScriptObjectHandle temp = ticking_area;
+        auto &block = source->getBlock(pos);
+        autohandle temp = ticking_area;
         if (auto obj_template = ScriptBinderBlockTemplate::build(block, pos, temp.transfer()); obj_template) {
           if (!obj_template->serialize(*this, target)) {
             getScriptReportQueue().addWarning("Failed to serialize block");

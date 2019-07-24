@@ -14,20 +14,18 @@
 #include <minecraft/level/Level.h>
 #include <minecraft/script/details/Components.h>
 
-#define IMPL_RETRIEVE(name)                                                                                                                          \
-  bool name::retrieveComponentFrom(ScriptApi::ScriptVersionInfo const &version, ScriptEngine &engine, ScriptServerContext &ctx, Actor &actor,        \
-                                   ScriptApi::ScriptObjectHandle &target) const
-#define IMPL_APPLY(name)                                                                                                                             \
-  bool name::applyComponentTo(ScriptApi::ScriptVersionInfo const &version, ScriptEngine &engine, ScriptServerContext &ctx, Actor &actor,             \
-                              ScriptApi::ScriptObjectHandle const &target) const
+#define IMPL_RETRIEVE(name)                                                                                                                                                                            \
+  bool name::retrieveComponentFrom(ScriptApi::ScriptVersionInfo const &version, ScriptEngine &engine, ScriptServerContext &ctx, Actor &actor, ScriptApi::ScriptObjectHandle &target) const
+#define IMPL_APPLY(name)                                                                                                                                                                               \
+  bool name::applyComponentTo(ScriptApi::ScriptVersionInfo const &version, ScriptEngine &engine, ScriptServerContext &ctx, Actor &actor, ScriptApi::ScriptObjectHandle const &target) const
 
 auto helpDefineItemSlots(std::vector<const ItemStack *> const &slots, ScriptApi::ScriptObjectHandle &target) {
-  target  = JS_NewArray(js_context);
+  target = JS_NewArray(js_context);
   int idx = 0;
   for (auto &slot : slots) {
-    ItemInstance instance{ *slot };
-    CLEANUP(QJS_FreeHandle) ScriptApi::ScriptObjectHandle temp = JS_NewObject(js_context);
-    QCHECK(scriptengine->helpDefineItemStack({ *slot }, temp));
+    ItemInstance instance{*slot};
+    autohandle temp = JS_NewObject(js_context);
+    QCHECK(scriptengine->helpDefineItemStack({*slot}, temp));
     QCHECK(scriptengine->setMember(target, idx++, temp.transfer()));
   }
   return true;
@@ -50,7 +48,7 @@ IMPL_RETRIEVE(ScriptAttackComponent) {
     scriptengine->getScriptReportQueue().addError("cannot get attack damage");
     return false;
   }
-  CLEANUP(QJS_FreeHandle) ScriptApi::ScriptObjectHandle temp = JS_NewObject(js_context);
+  autohandle temp = JS_NewObject(js_context);
   QCHECK(scriptengine->setMember(temp, "range_min", damage_attr.getMinValue()));
   QCHECK(scriptengine->setMember(temp, "range_max", damage_attr.getMaxValue()));
   QCHECK(scriptengine->createObject(target));
@@ -64,7 +62,7 @@ IMPL_APPLY(ScriptAttackComponent) {
     scriptengine->getScriptReportQueue().addError("cannot get attack damage");
     return false;
   }
-  CLEANUP(QJS_FreeHandle) ScriptApi::ScriptObjectHandle temp;
+  autohandle temp;
   QCHECK(scriptengine->getMember(target, "damage", temp));
   double min, max;
   QCHECK(scriptengine->getMember(temp, "range_min", min));
@@ -104,8 +102,8 @@ IMPL_RETRIEVE(ScriptInventoryContainerComponent) {
 }
 
 IMPL_RETRIEVE(ScriptTickWorldComponent) {
-  CLEANUP(QJS_FreeHandle) ScriptApi::ScriptObjectHandle temp = JS_NewObject(js_context);
-  double distance_to_players                                 = 0.0;
+  autohandle temp = JS_NewObject(js_context);
+  double distance_to_players = 0.0;
   int radius;
   bool never_despawn = false;
   if (auto component = actor.tryGetComponent<TickWorldComponent>(); component) {
@@ -115,8 +113,8 @@ IMPL_RETRIEVE(ScriptTickWorldComponent) {
       return false;
     }
     distance_to_players = component->getMaxDistToPlayers();
-    radius              = component->getChunkRadius();
-    never_despawn       = component->isAlwaysActive();
+    radius = component->getChunkRadius();
+    never_despawn = component->isAlwaysActive();
     if (!scriptengine->helpDefineTickingArea(version, temp, *ticking_area)) {
       scriptengine->getScriptReportQueue().addError("cannot define ticking area");
       return false;

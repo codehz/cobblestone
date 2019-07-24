@@ -38,8 +38,8 @@ inline namespace nbt ABITAG(js_nbt) {
   });
 
   namespace def {
-  JSClassDef Base = { "Tag" };
-#define MakeDef(name) JSClassDef name = { #name "Tag", &general_finalizer<name##Tag, ::name> }
+  JSClassDef Base = {"Tag"};
+#define MakeDef(name) JSClassDef name = {#name "Tag", &general_finalizer<name##Tag, ::name>}
   MakeDef(Byte);
   MakeDef(Short);
   MakeDef(Int);
@@ -56,19 +56,19 @@ inline namespace nbt ABITAG(js_nbt) {
   } // namespace def
 
   namespace function_list {
-  JSCFunctionListEntry Base[]      = { JS_CFUNC_DEF("toString", 0, general_toString) };
-  JSCFunctionListEntry Byte[]      = { JS_CGETSET_DEF("value", general_get<ByteTag>, general_set<ByteTag>) };
-  JSCFunctionListEntry Short[]     = { JS_CGETSET_DEF("value", general_get<ShortTag>, general_set<ShortTag>) };
-  JSCFunctionListEntry Int[]       = { JS_CGETSET_DEF("value", general_get<IntTag>, general_set<IntTag>) };
-  JSCFunctionListEntry Int64[]     = { JS_CGETSET_DEF("value", general_get<Int64Tag>, general_set<Int64Tag>) };
-  JSCFunctionListEntry Float[]     = { JS_CGETSET_DEF("value", general_get<FloatTag>, general_set<FloatTag>) };
-  JSCFunctionListEntry Double[]    = { JS_CGETSET_DEF("value", general_get<DoubleTag>, general_set<DoubleTag>) };
-  JSCFunctionListEntry ByteArray[] = { JS_CGETSET_DEF("value", general_get<ByteArrayTag>, general_set<ByteArrayTag>) };
-  JSCFunctionListEntry IntArray[]  = { JS_CGETSET_DEF("value", general_get<IntArrayTag>, general_set<IntArrayTag>) };
-  JSCFunctionListEntry String[]    = { JS_CGETSET_DEF("value", general_get<StringTag>, general_set<StringTag>) };
-  JSCFunctionListEntry List[]      = { JS_CGETSET_DEF("value", general_get<ListTag>, general_set<ListTag>) };
-  JSCFunctionListEntry Compound[]  = { JS_CGETSET_DEF("value", general_get<CompoundTag>, general_set<CompoundTag>) };
-  JSCFunctionListEntry End[]       = {};
+  JSCFunctionListEntry Base[] = {JS_CFUNC_DEF("toString", 0, general_toString)};
+  JSCFunctionListEntry Byte[] = {JS_CGETSET_DEF("value", general_get<ByteTag>, general_set<ByteTag>)};
+  JSCFunctionListEntry Short[] = {JS_CGETSET_DEF("value", general_get<ShortTag>, general_set<ShortTag>)};
+  JSCFunctionListEntry Int[] = {JS_CGETSET_DEF("value", general_get<IntTag>, general_set<IntTag>)};
+  JSCFunctionListEntry Int64[] = {JS_CGETSET_DEF("value", general_get<Int64Tag>, general_set<Int64Tag>)};
+  JSCFunctionListEntry Float[] = {JS_CGETSET_DEF("value", general_get<FloatTag>, general_set<FloatTag>)};
+  JSCFunctionListEntry Double[] = {JS_CGETSET_DEF("value", general_get<DoubleTag>, general_set<DoubleTag>)};
+  JSCFunctionListEntry ByteArray[] = {JS_CGETSET_DEF("value", general_get<ByteArrayTag>, general_set<ByteArrayTag>)};
+  JSCFunctionListEntry IntArray[] = {JS_CGETSET_DEF("value", general_get<IntArrayTag>, general_set<IntArrayTag>)};
+  JSCFunctionListEntry String[] = {JS_CGETSET_DEF("value", general_get<StringTag>, general_set<StringTag>)};
+  JSCFunctionListEntry List[] = {JS_CGETSET_DEF("value", general_get<ListTag>, general_set<ListTag>)};
+  JSCFunctionListEntry Compound[] = {JS_CGETSET_DEF("value", general_get<CompoundTag>, general_set<CompoundTag>)};
+  JSCFunctionListEntry End[] = {};
   } // namespace function_list
 
   JSValue general_toString(JSContext * ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
@@ -98,10 +98,10 @@ inline namespace nbt ABITAG(js_nbt) {
 
 static void preload(JSValue const &global) {
   JSValue base_proto, proto;
-#define REG(name)                                                                                                                                    \
-  JS_NewClass(js_runtime, name, &def::name);                                                                                                         \
-  proto = JS_NewObjectProtoClass(js_context, base_proto, Base);                                                                                      \
-  JS_SetPropertyFunctionList(js_context, proto, function_list::name, countof(function_list::name));                                                  \
+#define REG(name)                                                                                                                                                                                      \
+  JS_NewClass(js_runtime, name, &def::name);                                                                                                                                                           \
+  proto = JS_NewObjectProtoClass(js_context, base_proto, Base);                                                                                                                                        \
+  JS_SetPropertyFunctionList(js_context, proto, function_list::name, countof(function_list::name));                                                                                                    \
   JS_SetClassProto(js_context, name, proto)
 
   JS_NewClass(js_runtime, Base, &def::Base);
@@ -124,22 +124,23 @@ static void preload(JSValue const &global) {
 }
 
 template <typename T, JSClassID &id> JSValue create(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
-  CLEANUP(QJS_FreeValue) auto proto = JS_GetClassProto(ctx, id);
-  auto ret                          = JS_NewObjectProtoClass(js_context, proto, id);
+  autoval proto = JS_GetClassProto(ctx, id);
+  auto ret = JS_NewObjectProtoClass(js_context, proto, id);
   JS_SetOpaque(ret, new T);
-  if (argc > 0) JS_SetPropertyStr(js_context, ret, "value", JS_DupValue(js_context, argv[0]));
+  if (argc > 0)
+    JS_SetPropertyStr(js_context, ret, "value", JS_DupValue(js_context, argv[0]));
   handle_exception(js_context, "create tag");
   return ret;
 }
 
 JSValue nbt::create_tag(std::unique_ptr<Tag> tag) {
   Tag *temp = tag.get();
-#define CASE(name)                                                                                                                                   \
-  if (auto ptr = dynamic_cast<name##Tag *>(temp); ptr) {                                                                                             \
-    CLEANUP(QJS_FreeValue) auto proto = JS_GetClassProto(js_context, name);                                                                          \
-    auto ret                          = JS_NewObjectProtoClass(js_context, proto, name);                                                             \
-    JS_SetOpaque(ret, tag.release());                                                                                                                \
-    return ret;                                                                                                                                      \
+#define CASE(name)                                                                                                                                                                                     \
+  if (auto ptr = dynamic_cast<name##Tag *>(temp); ptr) {                                                                                                                                               \
+    autoval proto = JS_GetClassProto(js_context, name);                                                                                                                                                \
+    auto ret = JS_NewObjectProtoClass(js_context, proto, name);                                                                                                                                        \
+    JS_SetOpaque(ret, tag.release());                                                                                                                                                                  \
+    return ret;                                                                                                                                                                                        \
   }
 
   CASE(Byte);
@@ -159,8 +160,9 @@ JSValue nbt::create_tag(std::unique_ptr<Tag> tag) {
 }
 
 std::unique_ptr<Tag> nbt::from_tag(JSValue val) {
-#define CASE(name)                                                                                                                                   \
-  if (auto ptr = reinterpret_cast<name##Tag *>(JS_GetOpaque(val, name)); ptr) return ptr->copy();
+#define CASE(name)                                                                                                                                                                                     \
+  if (auto ptr = reinterpret_cast<name##Tag *>(JS_GetOpaque(val, name)); ptr)                                                                                                                          \
+    return ptr->copy();
 
   CASE(Byte);
   CASE(Short);
@@ -180,8 +182,7 @@ std::unique_ptr<Tag> nbt::from_tag(JSValue val) {
 }
 
 static void entry(JSValue const &global, JSValue const &server) {
-#define REG(name)                                                                                                                                    \
-  JS_SetPropertyStr(js_context, global, #name "Tag", JS_NewCFunction2(js_context, create<name##Tag, name>, #name "Tag", 0, JS_CFUNC_constructor, 0))
+#define REG(name) JS_SetPropertyStr(js_context, global, #name "Tag", JS_NewCFunction2(js_context, create<name##Tag, name>, #name "Tag", 0, JS_CFUNC_constructor, 0))
 
   REG(Byte);
   REG(Short);

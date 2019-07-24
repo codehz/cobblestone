@@ -9,42 +9,44 @@
 #include <minecraft/script/ScriptVersionInfo.h>
 #include <minecraft/script/details/BinderTemplates.h>
 
-#define BUILD_HEADER CLEANUP(QJS_FreeHandle) ScriptApi::ScriptObjectHandle handle = JS_NewObject(js_context)
+#define BUILD_HEADER autohandle handle = JS_NewObject(js_context)
 #define BUILD_FOOTER return handle.transfer()
-#define NEW_OBJECT(name) CLEANUP(QJS_FreeHandle) ScriptApi::ScriptObjectHandle name = JS_NewObject(js_context)
+#define NEW_OBJECT(name) autohandle name = JS_NewObject(js_context)
 
-#define FOR_ENTITY(name, var)                                                                                                                        \
-  ({                                                                                                                                                 \
-    NEW_OBJECT(temp);                                                                                                                                \
-    if (scriptengine->helpDefineActor(var, temp)) {                                                                                                  \
-      scriptengine->setMember(handle, name, temp.transfer());                                                                                        \
-    } else {                                                                                                                                         \
-      scriptengine->setMember(handle, name, JS_NULL);                                                                                                \
-    }                                                                                                                                                \
+#define FOR_ENTITY(name, var)                                                                                                                                                                          \
+  ({                                                                                                                                                                                                   \
+    NEW_OBJECT(temp);                                                                                                                                                                                  \
+    if (scriptengine->helpDefineActor(var, temp)) {                                                                                                                                                    \
+      scriptengine->setMember(handle, name, temp.transfer());                                                                                                                                          \
+    } else {                                                                                                                                                                                           \
+      scriptengine->setMember(handle, name, JS_NULL);                                                                                                                                                  \
+    }                                                                                                                                                                                                  \
   })
 
-#define FOR_ITEM(name, var)                                                                                                                          \
-  ({                                                                                                                                                 \
-    NEW_OBJECT(temp);                                                                                                                                \
-    if (scriptengine->helpDefineItemStack(var, temp)) scriptengine->setMember(handle, name, temp.transfer());                                        \
+#define FOR_ITEM(name, var)                                                                                                                                                                            \
+  ({                                                                                                                                                                                                   \
+    NEW_OBJECT(temp);                                                                                                                                                                                  \
+    if (scriptengine->helpDefineItemStack(var, temp))                                                                                                                                                  \
+      scriptengine->setMember(handle, name, temp.transfer());                                                                                                                                          \
   })
 
-#define FOR_POS(name, var)                                                                                                                           \
-  ({                                                                                                                                                 \
-    NEW_OBJECT(temp);                                                                                                                                \
-    if (scriptengine->helpDefinePosition(var, temp)) scriptengine->setMember(handle, name, temp.transfer());                                         \
+#define FOR_POS(name, var)                                                                                                                                                                             \
+  ({                                                                                                                                                                                                   \
+    NEW_OBJECT(temp);                                                                                                                                                                                  \
+    if (scriptengine->helpDefinePosition(var, temp))                                                                                                                                                   \
+      scriptengine->setMember(handle, name, temp.transfer());                                                                                                                                          \
   })
 
-#define FOR_BLOCK(name, actor, pos, var)                                                                                                             \
-  {                                                                                                                                                  \
-    ScriptApi::ScriptVersionInfo version;                                                                                                            \
-    NEW_OBJECT(ticking_area);                                                                                                                        \
-    NEW_OBJECT(temp);                                                                                                                                \
-    if (scriptengine->helpDefineTickingArea(version, ticking_area, actor->getUniqueID()))                                                            \
-      if (auto builder = ScriptBinderBlockTemplate::build(var, pos, ticking_area.transfer()); builder) {                                             \
-        builder->serialize(*scriptengine, temp);                                                                                                     \
-        scriptengine->setMember(handle, name, temp.transfer());                                                                                      \
-      }                                                                                                                                              \
+#define FOR_BLOCK(name, actor, pos, var)                                                                                                                                                               \
+  {                                                                                                                                                                                                    \
+    ScriptApi::ScriptVersionInfo version;                                                                                                                                                              \
+    NEW_OBJECT(ticking_area);                                                                                                                                                                          \
+    NEW_OBJECT(temp);                                                                                                                                                                                  \
+    if (scriptengine->helpDefineTickingArea(version, ticking_area, actor->getUniqueID()))                                                                                                              \
+      if (auto builder = ScriptBinderBlockTemplate::build(var, pos, ticking_area.transfer()); builder) {                                                                                               \
+        builder->serialize(*scriptengine, temp);                                                                                                                                                       \
+        scriptengine->setMember(handle, name, temp.transfer());                                                                                                                                        \
+      }                                                                                                                                                                                                \
   }
 
 inline namespace Policy {
@@ -56,10 +58,7 @@ class ScriptPlayerAttackActorPolicy : public BasePolicy {
 
 public:
   static inline std::string TAG = "stone:player_attack_entity";
-  ScriptPlayerAttackActorPolicy(Player *player, Actor *target)
-      : BasePolicy(true)
-      , player(player)
-      , target(target) {}
+  ScriptPlayerAttackActorPolicy(Player *player, Actor *target) : BasePolicy(true), player(player), target(target) {}
   virtual ~ScriptPlayerAttackActorPolicy() {}
   virtual std::string const &getName() const override { return TAG; }
   virtual JSValue build() override {
@@ -77,10 +76,7 @@ class ScriptActorPickItemUpPolicy : public BasePolicy {
 
 public:
   static inline std::string TAG = "stone:entity_pick_item_up";
-  ScriptActorPickItemUpPolicy(Actor *actor, ItemStack const &item)
-      : BasePolicy(true)
-      , actor(actor)
-      , item(item) {}
+  ScriptActorPickItemUpPolicy(Actor *actor, ItemStack const &item) : BasePolicy(true), actor(actor), item(item) {}
   virtual ~ScriptActorPickItemUpPolicy() {}
   virtual std::string const &getName() const override { return TAG; }
   virtual JSValue build() override {
@@ -98,10 +94,7 @@ class ScriptActorDropItemPolicy : public BasePolicy {
 
 public:
   static inline std::string TAG = "stone:entity_drop_item";
-  ScriptActorDropItemPolicy(Actor *actor, ItemStack const &item)
-      : BasePolicy(true)
-      , actor(actor)
-      , item(item) {}
+  ScriptActorDropItemPolicy(Actor *actor, ItemStack const &item) : BasePolicy(true), actor(actor), item(item) {}
   virtual ~ScriptActorDropItemPolicy() {}
   virtual std::string const &getName() const override { return TAG; }
   virtual JSValue build() override {
@@ -119,10 +112,7 @@ class ScriptPlayerUseItemPolicy : public BasePolicy {
 
 public:
   static inline std::string TAG = "stone:player_use_item";
-  ScriptPlayerUseItemPolicy(Player *player, ItemStack const &item)
-      : BasePolicy(true)
-      , player(player)
-      , item(item) {}
+  ScriptPlayerUseItemPolicy(Player *player, ItemStack const &item) : BasePolicy(true), player(player), item(item) {}
   virtual ~ScriptPlayerUseItemPolicy() {}
   virtual std::string const &getName() const override { return TAG; }
   virtual JSValue build() override {
@@ -144,12 +134,7 @@ class ScriptPlayerUseItemOnPolicy : public BasePolicy {
 public:
   static inline std::string TAG = "stone:player_use_item_on";
   ScriptPlayerUseItemOnPolicy(Player *player, BlockPos block_pos, Vec3 pos, ItemStack const &item, Block const *block)
-      : BasePolicy(true)
-      , player(player)
-      , block_pos(block_pos)
-      , pos(pos)
-      , item(item)
-      , block(block) {}
+      : BasePolicy(true), player(player), block_pos(block_pos), pos(pos), item(item), block(block) {}
   virtual ~ScriptPlayerUseItemOnPolicy() {}
   virtual std::string const &getName() const override { return TAG; }
   virtual JSValue build() override {
@@ -169,16 +154,13 @@ class ScriptPlayerDestroyBlockPolicy : public BasePolicy {
 
 public:
   static inline std::string TAG = "stone:player_destroy_block";
-  ScriptPlayerDestroyBlockPolicy(Player *player, BlockPos pos)
-      : BasePolicy(true)
-      , player(player)
-      , pos(pos) {}
+  ScriptPlayerDestroyBlockPolicy(Player *player, BlockPos pos) : BasePolicy(true), player(player), pos(pos) {}
   virtual ~ScriptPlayerDestroyBlockPolicy() {}
   virtual std::string const &getName() const override { return TAG; }
   virtual JSValue build() override {
     BUILD_HEADER;
     FOR_ENTITY("player", *player);
-    auto &bs    = player->getBlockSource();
+    auto &bs = player->getBlockSource();
     auto &block = bs->getBlock(pos);
     FOR_BLOCK("block", player, pos, block);
     BUILD_FOOTER;
@@ -191,7 +173,8 @@ public:
 TInstanceHook(bool, _ZN6Player6attackER5Actor, Player, Actor *target) {
   ScriptPlayerAttackActorPolicy policy(this, target);
   Instance<PolicyManager>().dispatch(policy);
-  if (!policy.result) return false;
+  if (!policy.result)
+    return false;
   return original(this, target);
 }
 
@@ -199,14 +182,16 @@ TInstanceHook(bool, _ZN6Player6attackER5Actor, Player, Actor *target) {
 TInstanceHook(bool, _ZN5Actor10pickUpItemER9ItemActor, Actor, ItemActor *item) {
   ScriptActorPickItemUpPolicy policy(this, item->getItemStack());
   Instance<PolicyManager>().dispatch(policy);
-  if (!policy.result) return false;
+  if (!policy.result)
+    return false;
   return original(this, item);
 }
 TInstanceHook(bool, _ZN6Player4takeER5Actorii, Player, Actor &actor, int a, int b) {
   if (actor.hasCategory(ActorCategory::Item)) {
     ScriptActorPickItemUpPolicy policy(this, ((ItemActor &)actor).getItemStack());
     Instance<PolicyManager>().dispatch(policy);
-    if (!policy.result) return false;
+    if (!policy.result)
+      return false;
   }
   return original(this, actor, a, b);
 }
@@ -215,13 +200,15 @@ TInstanceHook(bool, _ZN6Player4takeER5Actorii, Player, Actor &actor, int a, int 
 TInstanceHook(void, _ZN5Actor4dropERK9ItemStackb, Actor, ItemStack const &stack, bool flag) {
   ScriptActorDropItemPolicy policy(this, stack);
   Instance<PolicyManager>().dispatch(policy);
-  if (!policy.result) return;
+  if (!policy.result)
+    return;
   return original(this, stack, flag);
 }
 TInstanceHook(void, _ZN5Actor11dropTowardsERK9ItemStack4Vec3, Actor, ItemStack const &stack, Vec3 vec) {
   ScriptActorDropItemPolicy policy(this, stack);
   Instance<PolicyManager>().dispatch(policy);
-  if (!policy.result) return;
+  if (!policy.result)
+    return;
   return original(this, stack, vec);
 }
 
@@ -229,16 +216,17 @@ TInstanceHook(void, _ZN5Actor11dropTowardsERK9ItemStack4Vec3, Actor, ItemStack c
 TInstanceHook(bool, _ZN8GameMode7useItemER9ItemStack, GameMode, ItemStack &stack) {
   ScriptPlayerUseItemPolicy policy(this->getPlayer(), stack);
   Instance<PolicyManager>().dispatch(policy);
-  if (!policy.result) return false;
+  if (!policy.result)
+    return false;
   return original(this, stack);
 }
 
 // ~ player_use_item_on ~ //
-TInstanceHook(bool, _ZN8GameMode9useItemOnER9ItemStackRK8BlockPoshRK4Vec3PK5Block, GameMode, ItemStack &stack, BlockPos const &pos,
-              unsigned char unch, Vec3 const &vec, Block const *block) {
+TInstanceHook(bool, _ZN8GameMode9useItemOnER9ItemStackRK8BlockPoshRK4Vec3PK5Block, GameMode, ItemStack &stack, BlockPos const &pos, unsigned char unch, Vec3 const &vec, Block const *block) {
   ScriptPlayerUseItemOnPolicy policy(this->getPlayer(), pos, vec, stack, block);
   Instance<PolicyManager>().dispatch(policy);
-  if (!policy.result) return false;
+  if (!policy.result)
+    return false;
   return original(this, stack, pos, unch, vec, block);
 }
 
@@ -246,7 +234,8 @@ TInstanceHook(bool, _ZN8GameMode9useItemOnER9ItemStackRK8BlockPoshRK4Vec3PK5Bloc
 TInstanceHook(bool, _ZN8GameMode12destroyBlockERK8BlockPosh, GameMode, BlockPos const &pos, unsigned char flag) {
   ScriptPlayerDestroyBlockPolicy policy(this->getPlayer(), pos);
   Instance<PolicyManager>().dispatch(policy);
-  if (!policy.result) return false;
+  if (!policy.result)
+    return false;
   return original(this, pos, flag);
 }
 

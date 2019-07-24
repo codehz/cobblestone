@@ -3,8 +3,7 @@
 
 namespace ScriptApi {
 
-QuickJSInterface::QuickJSInterface()
-    : inited(false) {}
+QuickJSInterface::QuickJSInterface() : inited(false) {}
 QuickJSInterface::~QuickJSInterface() {}
 bool QuickJSInterface::initialize(ScriptReport &) {
   inited = true;
@@ -12,14 +11,16 @@ bool QuickJSInterface::initialize(ScriptReport &) {
   js_runtime = JS_NewRuntime();
   js_context = JS_NewContext(js_runtime);
   JS_NewClassID(&system_class);
-  static JSClassDef system_def = { "MinecraftServerSystem" };
+  static JSClassDef system_def = {"MinecraftServerSystem"};
   JS_NewClass(js_runtime, system_class, &system_def);
   auto proto = JS_NewObject(js_context);
   JS_SetPropertyFunctionList(js_context, proto, &systemEntries[0], systemEntries.size());
-  for (auto addition : quickjs_proto_extras) addition(proto);
+  for (auto addition : quickjs_proto_extras)
+    addition(proto);
   JS_SetClassProto(js_context, system_class, proto);
-  CLEANUP(QJS_FreeValue) JSValue global = JS_GetGlobalObject(js_context);
-  for (auto &preload : quickjs_preloads) preload(global);
+  autoval global = JS_GetGlobalObject(js_context);
+  for (auto &preload : quickjs_preloads)
+    preload(global);
   JS_SetPropertyStr(js_context, global, "globalThis", global);
   global = JS_UNDEFINED;
   return true;
@@ -64,7 +65,7 @@ bool QuickJSInterface::hasMember(ScriptObjectHandle const &src, std::string cons
     return false;
   }
   auto natom = JS_NewAtom(js_context, name.data());
-  result     = JS_HasProperty(js_context, src, natom);
+  result = JS_HasProperty(js_context, src, natom);
   JS_FreeAtom(js_context, natom);
   return true;
 }
@@ -73,8 +74,8 @@ bool QuickJSInterface::hasMember(ScriptObjectHandle const &src, int const &idx, 
     report.addError("Try to use null ptr");
     return false;
   }
-  CLEANUP(QJS_FreeAtom) auto natom = JS_NewAtomUInt32(js_context, idx);
-  result                           = JS_HasProperty(js_context, src, natom);
+  autoatom natom = JS_NewAtomUInt32(js_context, idx);
+  result = JS_HasProperty(js_context, src, natom);
   HANDLE_EXCEPTION();
   return true;
 }
@@ -120,19 +121,23 @@ bool QuickJSInterface::setValue(ScriptObjectHandle &src, bool value, ScriptRepor
 }
 bool QuickJSInterface::getValue(ScriptObjectHandle const &src, int &result, ScriptReport &report) {
   auto ret = JS_ToInt32(js_context, &result, src);
-  if (ret != 0) { report.addError("Target value is not integer (" + std::to_string(JS_VALUE_GET_TAG(src.value)) + ")"); }
+  if (ret != 0) {
+    report.addError("Target value is not integer (" + std::to_string(JS_VALUE_GET_TAG(src.value)) + ")");
+  }
   return ret == 0;
 }
 bool QuickJSInterface::getValue(ScriptObjectHandle const &src, double &result, ScriptReport &report) {
   auto ret = JS_ToFloat64(js_context, &result, src);
-  if (ret != 0) { report.addError("Target value is not float"); }
+  if (ret != 0) {
+    report.addError("Target value is not float");
+  }
   return ret == 0;
 }
 bool QuickJSInterface::getValue(ScriptObjectHandle const &src, std::string &result, ScriptReport &report) {
-  int len                           = 0;
-  CLEANUP(QJS_FreeCString) auto ret = JS_ToCStringLen(js_context, &len, src, false);
+  int len = 0;
+  autostr ret = JS_ToCStringLen(js_context, &len, src, false);
   if (ret) {
-    result = { ret, (size_t)len };
+    result = {ret, (size_t)len};
   } else {
     report.addError("Target value is not string");
   }
@@ -147,18 +152,16 @@ bool QuickJSInterface::getValue(ScriptObjectHandle const &src, bool &result, Scr
   result = ret;
   return true;
 }
-bool QuickJSInterface::callObjectFunction(ScriptObjectHandle const &src, std::string const &name, std::vector<ScriptObjectHandle> const &args,
-                                          ScriptObjectHandle &result, ScriptReport &report) {
-  CLEANUP(QJS_FreeValue) auto func = JS_GetPropertyStr(js_context, src, name.data());
-  result                           = JS_Call(js_context, func, src, args.size(), (JSValue *)&args[0]);
+bool QuickJSInterface::callObjectFunction(ScriptObjectHandle const &src, std::string const &name, std::vector<ScriptObjectHandle> const &args, ScriptObjectHandle &result, ScriptReport &report) {
+  autoval func = JS_GetPropertyStr(js_context, src, name.data());
+  result = JS_Call(js_context, func, src, args.size(), (JSValue *)&args[0]);
   HANDLE_EXCEPTION();
   return true;
 }
-bool QuickJSInterface::callGlobalFunction(ScriptObjectHandle const &src, std::vector<ScriptObjectHandle> const &args, ScriptObjectHandle &result,
-                                          ScriptReport &report) {
+bool QuickJSInterface::callGlobalFunction(ScriptObjectHandle const &src, std::vector<ScriptObjectHandle> const &args, ScriptObjectHandle &result, ScriptReport &report) {
   Log::debug("QuickJS", "call");
-  CLEANUP(QJS_FreeValue) auto global = JS_GetGlobalObject(js_context);
-  result                             = JS_Call(js_context, src, global, args.size(), (JSValue *)&args[0]);
+  autoval global = JS_GetGlobalObject(js_context);
+  result = JS_Call(js_context, src, global, args.size(), (JSValue *)&args[0]);
   HANDLE_EXCEPTION();
   return true;
 }
@@ -184,18 +187,18 @@ bool QuickJSInterface::getHandleType(ScriptObjectHandle const &src, ScriptObject
   return true;
 }
 bool QuickJSInterface::getMemberNames(ScriptObjectHandle const &src, std::vector<std::string> &result, ScriptReport &report) {
-  CLEANUP(QJS_FreeValue) auto global  = JS_GetGlobalObject(js_context);
-  CLEANUP(QJS_FreeValue) auto reflect = JS_GetPropertyStr(js_context, global, "Reflect");
-  CLEANUP(QJS_FreeValue) auto ownKeys = JS_GetPropertyStr(js_context, reflect, "ownKeys");
-  CLEANUP(QJS_FreeValue) auto arr     = JS_Call(js_context, ownKeys, reflect, 1, (JSValue *)&src);
+  autoval global = JS_GetGlobalObject(js_context);
+  autoval reflect = JS_GetPropertyStr(js_context, global, "Reflect");
+  autoval ownKeys = JS_GetPropertyStr(js_context, reflect, "ownKeys");
+  autoval arr = JS_Call(js_context, ownKeys, reflect, 1, (JSValue *)&src);
   HANDLE_EXCEPTION();
-  CLEANUP(QJS_FreeValue) auto propLen = JS_GetPropertyStr(js_context, arr, "length");
+  autoval propLen = JS_GetPropertyStr(js_context, arr, "length");
   result.clear();
   for (int32_t i = 0; i < JS_VALUE_GET_INT(propLen); i++) {
-    CLEANUP(QJS_FreeValue) auto key = JS_GetPropertyUint32(js_context, arr, i);
+    autoval key = JS_GetPropertyUint32(js_context, arr, i);
     if (JS_IsString(key)) {
-      int keyLen                           = 0;
-      CLEANUP(QJS_FreeCString) auto keyStr = JS_ToCStringLen(js_context, &keyLen, key, false);
+      int keyLen = 0;
+      autostr keyStr = JS_ToCStringLen(js_context, &keyLen, key, false);
       result.emplace_back(keyStr, (size_t)keyLen);
     }
   }
@@ -204,7 +207,8 @@ bool QuickJSInterface::getMemberNames(ScriptObjectHandle const &src, std::vector
 }
 bool QuickJSInterface::getArrayLength(ScriptObjectHandle const &src, int &result, ScriptReport &report) {
   ScriptObjectHandle handle;
-  if (!getMember(src, "length", handle, report)) return false;
+  if (!getMember(src, "length", handle, report))
+    return false;
   return getValue(handle, result, report);
 }
 bool QuickJSInterface::getGlobalObject(ScriptObjectHandle &result, ScriptReport &) {
@@ -225,34 +229,34 @@ bool QuickJSInterface::defineSystemServerCallbacks(ScriptObjectHandle const &, S
 bool QuickJSInterface::defineSystemClientCallbacks(ScriptObjectHandle const &, ScriptCallbackInterface &, ScriptReport &) { return false; }
 
 std::vector<JSCFunctionListEntry> QuickJSInterface::serverEntries = {
-  JS_CFUNC_DEF("registerSystem", 2, QuickJSInterface::processRegisterSystem),
-  JS_CFUNC_DEF("log", 0, QuickJSInterface::processLog),
+    JS_CFUNC_DEF("registerSystem", 2, QuickJSInterface::processRegisterSystem),
+    JS_CFUNC_DEF("log", 0, QuickJSInterface::processLog),
 };
 std::vector<JSCFunctionListEntry> QuickJSInterface::systemEntries = {
-  JS_CFUNC_DEF("registerEventData", 2, QuickJSInterface::processRegisterEventData),
-  JS_CFUNC_DEF("createEventData", 1, QuickJSInterface::processCreateEventData),
-  JS_CFUNC_DEF("listenForEvent", 2, QuickJSInterface::processListenForEvent),
-  JS_CFUNC_DEF("broadcastEvent", 2, QuickJSInterface::processBroadcastEvent),
+    JS_CFUNC_DEF("registerEventData", 2, QuickJSInterface::processRegisterEventData),
+    JS_CFUNC_DEF("createEventData", 1, QuickJSInterface::processCreateEventData),
+    JS_CFUNC_DEF("listenForEvent", 2, QuickJSInterface::processListenForEvent),
+    JS_CFUNC_DEF("broadcastEvent", 2, QuickJSInterface::processBroadcastEvent),
 
-  JS_CFUNC_DEF("createEntity", 0, QuickJSInterface::processCreateEntity),
-  JS_CFUNC_DEF("destroyEntity", 1, QuickJSInterface::processDestroyEntity),
-  JS_CFUNC_DEF("isValidEntity", 1, QuickJSInterface::processIsValidEntity),
+    JS_CFUNC_DEF("createEntity", 0, QuickJSInterface::processCreateEntity),
+    JS_CFUNC_DEF("destroyEntity", 1, QuickJSInterface::processDestroyEntity),
+    JS_CFUNC_DEF("isValidEntity", 1, QuickJSInterface::processIsValidEntity),
 
-  JS_CFUNC_DEF("registerComponent", 2, QuickJSInterface::processRegisterComponent),
-  JS_CFUNC_DEF("createComponent", 2, QuickJSInterface::processCreateComponent),
-  JS_CFUNC_DEF("hasComponent", 2, QuickJSInterface::processHasComponent),
-  JS_CFUNC_DEF("getComponent", 2, QuickJSInterface::processGetComponent),
-  JS_CFUNC_DEF("applyComponentChanges", 2, QuickJSInterface::processApplyComponentChanges),
-  JS_CFUNC_DEF("destroyComponent", 2, QuickJSInterface::processDestroyChanges),
+    JS_CFUNC_DEF("registerComponent", 2, QuickJSInterface::processRegisterComponent),
+    JS_CFUNC_DEF("createComponent", 2, QuickJSInterface::processCreateComponent),
+    JS_CFUNC_DEF("hasComponent", 2, QuickJSInterface::processHasComponent),
+    JS_CFUNC_DEF("getComponent", 2, QuickJSInterface::processGetComponent),
+    JS_CFUNC_DEF("applyComponentChanges", 2, QuickJSInterface::processApplyComponentChanges),
+    JS_CFUNC_DEF("destroyComponent", 2, QuickJSInterface::processDestroyChanges),
 
-  JS_CFUNC_DEF("registerQuery", 0, QuickJSInterface::processRegisterQuery),
-  JS_CFUNC_DEF("addFilterToQuery", 2, QuickJSInterface::processAddFilterToQuery),
-  JS_CFUNC_DEF("getEntitiesFromQuery", 1, QuickJSInterface::processGetEntitiesFromQuery),
+    JS_CFUNC_DEF("registerQuery", 0, QuickJSInterface::processRegisterQuery),
+    JS_CFUNC_DEF("addFilterToQuery", 2, QuickJSInterface::processAddFilterToQuery),
+    JS_CFUNC_DEF("getEntitiesFromQuery", 1, QuickJSInterface::processGetEntitiesFromQuery),
 
-  JS_CFUNC_DEF("getBlock", 2, QuickJSInterface::processGetBlock),
-  JS_CFUNC_DEF("getBlocks", 3, QuickJSInterface::processGetBlocks),
+    JS_CFUNC_DEF("getBlock", 2, QuickJSInterface::processGetBlock),
+    JS_CFUNC_DEF("getBlocks", 3, QuickJSInterface::processGetBlocks),
 
-  JS_CFUNC_DEF("executeCommand", 2, QuickJSInterface::processExecuteCommand),
+    JS_CFUNC_DEF("executeCommand", 2, QuickJSInterface::processExecuteCommand),
 };
 
 JSClassID QuickJSInterface::system_class;

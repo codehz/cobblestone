@@ -20,7 +20,7 @@ JSValue QuickJSInterface::processRegisterSystem(JSContext *ctx, JSValueConst thi
 
 JSValue QuickJSInterface::processLog(JSContext *ctx, JSValue this_val, int argc, JSValue *argv) {
   for (int i = 0; i < argc; i++) {
-    CLEANUP(QJS_FreeCString) char const *str = JS_ToCString(js_context, argv[i]);
+    autostr str = JS_ToCString(js_context, argv[i]);
     Log::debug("QuickJS/log", "%s", str);
   }
   return JS_UNDEFINED;
