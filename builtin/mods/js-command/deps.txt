@@ -1,1 +1,1 @@
-builtin-mod-quickjs
+builtin-mod-quickjs;builtin-mod-js-nbt

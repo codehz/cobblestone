@@ -1,14 +1,21 @@
+#include <mods-js-nbt/nbt.hpp>
 #include <mods-quickjs/quickjs.hpp>
 
+#include <minecraft/actor/Player.h>
+#include <minecraft/block/Block.h>
 #include <minecraft/commands/Command.h>
 #include <minecraft/commands/CommandMessage.h>
 #include <minecraft/commands/CommandOrigin.h>
 #include <minecraft/commands/CommandOutput.h>
 #include <minecraft/commands/CommandParameterData.h>
 #include <minecraft/commands/CommandRegistry.h>
+#include <minecraft/commands/CommandSelector.h>
 #include <minecraft/commands/MinecraftCommands.h>
 #include <minecraft/core/Minecraft.h>
 #include <minecraft/core/typeid.h>
+
+#include <climits>
+#include <cstring>
 
 #include "genfunc.h"
 
@@ -18,11 +25,12 @@ struct ParameterDef {
   size_t size;
   std::string name;
   typeid_t<CommandRegistry> type;
+  CommandParameterDataType datatype;
   Parser parser;
   void (*init)(void *);
   void (*deinit)(void *);
   JSValue (*fetch)(void *, CommandOrigin const &);
-  std::string softEnum;
+  std::string enumid;
   bool optional;
 
   void makeOptional() { optional = true; }
@@ -46,6 +54,39 @@ IMPL(std::string) { return JS_NewString(js_context, ((std::string *)self)->data(
 IMPL(int) { return JS_NewInt32(js_context, *(int *)self); }
 IMPL(float) { return JS_NewFloat64(js_context, *(float *)self); }
 IMPL(bool) { return JS_NewBool(js_context, *(bool *)self); }
+IMPL(Block const *) {
+  if (auto block = *((Block const **)self); block) {
+    return JS_NewString(js_context, block->getFullName().data());
+  }
+  return JS_UNDEFINED;
+}
+IMPL(Json::Value) {
+  autohandle ret = JS_NewObject(js_context);
+  scriptengine->serializeJsonToScriptObjectHandle(ret, *((Json::Value *)self));
+  return ret.transfer();
+}
+IMPL(CommandSelector<Actor>) {
+  autohandle ret = JS_NewArray(js_context);
+  auto results = ((CommandSelector<Actor> *)self)->results(orig);
+  int idx = 0;
+  for (auto it : *results) {
+    autohandle item = JS_NewObject(js_context);
+    scriptengine->helpDefineActor(*it, item);
+    JS_SetPropertyInt64(js_context, ret, idx++, item.transfer());
+  }
+  return ret.transfer();
+}
+IMPL(CommandSelector<Player>) {
+  autohandle ret = JS_NewArray(js_context);
+  auto results = ((CommandSelector<Actor> *)self)->results(orig);
+  int idx = 0;
+  for (auto it : *results) {
+    autohandle item = JS_NewObject(js_context);
+    scriptengine->helpDefineActor(*it, item);
+    JS_SetPropertyInt64(js_context, ret, idx++, item.transfer());
+  }
+  return ret.transfer();
+}
 
 #undef IMPL
 
@@ -158,7 +199,8 @@ struct CustomCommand : Command {
     size_t size = 0;
     for (auto def : vt->defs)
       size += def.size;
-    auto ptr = new (malloc(sizeof(CustomCommand) + size)) CustomCommand(vt);
+    auto src = calloc(1, sizeof(CustomCommand) + size);
+    auto ptr = new (src) CustomCommand(vt);
     return std::unique_ptr<Command>(ptr);
   }
 };
@@ -168,9 +210,19 @@ auto registerCustomCommand(std::string name, std::string desc, int lvl) {
   registry->registerCommand(name, desc.c_str(), (CommandPermissionLevel)lvl, (CommandFlag)0, (CommandFlag)0);
   return [=](MyCommandVTable &rvt) {
     registry->registerCustomOverload(name, {0, INT32_MAX}, gen_function(new MyCommandVTable(rvt), CustomCommand::create), [&](CommandRegistry::Overload &overload) {
+      Log::info("CustomCommand", "register /%s", name.data());
       size_t offset = sizeof(CustomCommand);
       for (auto &p : rvt.defs) {
-        overload.params.emplace_back(CommandParameterData{p.type, p.parser, p.name.c_str(), CommandParameterDataType::NORMAL, nullptr, (int)offset, p.optional, -1});
+        overload.params.emplace_back(CommandParameterData{
+            p.type,
+            p.parser,
+            p.name.c_str(),
+            p.datatype,
+            nullptr,
+            (int)offset,
+            p.optional,
+            -1,
+        });
         offset += p.size;
       }
     });
@@ -218,6 +270,14 @@ static JSValue registerCommand(JSContext *ctx, JSValueConst this_val, int argc, 
         mvt.defs.push_back(commonParameter<float>(pname));
       else if (ptype == "bool")
         mvt.defs.push_back(commonParameter<bool>(pname));
+      else if (ptype == "block")
+        mvt.defs.push_back(commonParameter<Block const *>(pname));
+      else if (ptype == "json")
+        mvt.defs.push_back(commonParameter<Json::Value>(pname));
+      else if (ptype == "entity")
+        mvt.defs.push_back(commonParameter<CommandSelector<Actor>>(pname));
+      else if (ptype == "player")
+        mvt.defs.push_back(commonParameter<CommandSelector<Player>>(pname));
       else
         return JS_ThrowRangeError(js_context, "Parameter type %s hs not been supported", ptype.data());
       if (poptional)
