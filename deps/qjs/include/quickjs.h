@@ -202,7 +202,7 @@ typedef struct JSValue {
 #define JS_VALUE_GET_PTR(v) ((v).u.ptr)
 
 #define JS_MKVAL(tagv, val) JSValue{ .u = {.int32 = val}, .tag = tagv }
-#define JS_MKPTR(tagv, p) JSValue{ .u.ptr = p, tag }
+#define JS_MKPTR(tagv, p) JSValue{ .u.ptr = p, tagv }
 
 #define JS_TAG_IS_FLOAT64(tag) ((unsigned)(tag) == JS_TAG_FLOAT64)
 
@@ -573,6 +573,15 @@ static inline void JS_FreeValueRT(JSRuntime *rt, JSValue v)
 }
 
 static inline JSValue JS_DupValue(JSContext *ctx, JSValueConst v)
+{
+    if (JS_VALUE_HAS_REF_COUNT(v)) {
+        JSRefCountHeader *p = (JSRefCountHeader *)JS_VALUE_GET_PTR(v);
+        p->ref_count++;
+    }
+    return (JSValue)v;
+}
+
+static inline JSValue JS_DupValueRT(JSRuntime *rt, JSValueConst v)
 {
     if (JS_VALUE_HAS_REF_COUNT(v)) {
         JSRefCountHeader *p = (JSRefCountHeader *)JS_VALUE_GET_PTR(v);
