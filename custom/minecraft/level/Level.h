@@ -15,6 +15,7 @@ class ActorBlockSyncMessage;
 class BlockActor;
 class Dimension;
 class PlayerListEntry;
+class Player;
 
 class BlockSourceListener {
 public:
@@ -41,6 +42,8 @@ public:
   std::unordered_map<mce::UUID, PlayerListEntry> &getPlayerList();
 
   static bool isUsableLevel(Level *);
+
+  void forEachPlayer(std::function<bool(Player &)>);
 
   // ~ level-helper ~ //
   std::vector<std::unique_ptr<Actor>> &getActorVector() const ABITAG(level_helper);

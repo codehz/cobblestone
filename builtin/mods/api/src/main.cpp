@@ -1,10 +1,13 @@
 #include <rpcws.hpp>
 
+#include <modloader/hook.hpp>
+#include <modloader/log.hpp>
 #include <modloader/refs.hpp>
 #include <modloader/utils.hpp>
 
 #include <mods-ip/bind.hpp>
 
+#include <minecraft/actor/Player.h>
 #include <minecraft/commands/CommandContext.h>
 #include <minecraft/commands/CommandOrigin.h>
 #include <minecraft/commands/CommandVersion.h>
@@ -14,6 +17,7 @@
 #include <minecraft/core/ServiceLocator.h>
 #include <minecraft/level/Level.h>
 #include <minecraft/level/PlayerListEntry.h>
+#include <minecraft/packet/TextPacket.h>
 
 #include <memory>
 #include <thread>
@@ -48,9 +52,7 @@ class ApiCommandOrigin : public ScriptCommandOrigin {
 
 public:
   INLINE ApiCommandOrigin(ServerLevel &level, ScriptEngine &engine, std::string const &name, std::function<void(Json::Value &&)> callback)
-      : ScriptCommandOrigin(level, engine)
-      , name(name)
-      , callback(callback) {}
+      : ScriptCommandOrigin(level, engine), name(name), callback(callback) {}
   inline virtual ~ApiCommandOrigin() override {}
   inline virtual std::string getName() const override { return name; }
   inline virtual void handleCommandOutputCallback(Json::Value &&value) override { callback(std::move(value)); }
@@ -61,28 +63,31 @@ static std::optional<std::tuple<ServerInstance *, Minecraft *, Level *>> getStuf
 static std::optional<std::tuple<ServerInstance *, Minecraft *, Level *>> getStuff() {
   if (auto instance = ServiceLocator<ServerInstance>::get(); instance)
     if (auto minecraft = instance->getMinecraft(); minecraft)
-      if (auto level = minecraft->getLevel(); Level::isUsableLevel(level)) return std::make_tuple(instance, minecraft, level);
+      if (auto level = minecraft->getLevel(); Level::isUsableLevel(level))
+        return std::make_tuple(instance, minecraft, level);
   return {};
 }
 
 LAZY(register, {
   auto &ins = Instance<RPC>();
+  ins.event("core.log");
+  ins.event("chat.recv");
   ins.reg("core.stop", [](auto client, json req) -> json {
     refs<DedicatedServer>->stop();
     return {};
   });
   ins.reg("core.ping", [](auto client, json req) -> json { return req; });
-  ins.reg("core.tps", [](auto client, json req) -> json { return { 20.0 }; }); // TODO
+  ins.reg("core.tps", [](auto client, json req) -> json { return {20.0}; }); // TODO
   ins.reg("core.online_players", [](auto client, json req) -> json {
     if (auto stuff = getStuff(); stuff) {
       auto [instancce, mc, level] = *stuff;
-      auto arr                    = json::array();
+      auto arr = json::array();
       for (auto &[uuid, entry] : level->getPlayerList()) {
         auto strUUID = entry.uuid.asString();
         arr.push_back(json::object({
-            { "name", entry.name },
-            { "xuid", entry.xuid },
-            { "uuid", strUUID },
+            {"name", entry.name},
+            {"xuid", entry.xuid},
+            {"uuid", strUUID},
         }));
       }
       return arr;
@@ -92,33 +97,70 @@ LAZY(register, {
 
   ins.reg("command.execute", [](auto client, json req) -> promise<json> {
     std::string name, command;
-    name    = req["name"].get<std::string>();
+    name = req["name"].get<std::string>();
     command = req["command"].get<std::string>();
     if (auto stuff = getStuff(); stuff) {
-      auto [instance, mc, level] = *stuff;
-      return promise<json>{ [=](auto then_fn, auto fail_fn) {
+      return promise<json>{[=](auto then_fn, auto fail_fn) {
+        auto instance = std::get<0>(*stuff);
+        auto mc = std::get<1>(*stuff);
+        auto level = std::get<2>(*stuff);
         instance->queueForServerThread([=] {
           ScriptEngine *eng = nullptr;
-          auto origin       = std::make_unique<ApiCommandOrigin>(*(ServerLevel *)level, *eng, name, [=](Json::Value &&data) {
+          auto origin = std::make_unique<ApiCommandOrigin>(*(ServerLevel *)level, *eng, name, [=](Json::Value &&data) {
             Json::FastWriter writer;
             then_fn(json::parse(writer.write(data)));
           });
-          auto ctx          = std::make_shared<CommandContext>(command, std::move(origin), CommandVersion::CurrentVersion);
+          auto ctx = std::make_shared<CommandContext>(command, std::move(origin), CommandVersion::CurrentVersion);
           mc->getCommands()->executeCommand(ctx, false);
         });
-      } };
+      }};
     }
     throw std::runtime_error("Level is not loaded");
   });
 
-  ins.reg("chat.send", [](auto client, json req) -> json { return {}; }); // TODO
+  ins.reg("chat.send", [](auto client, json req) -> json {
+    if (auto stuff = getStuff(); stuff) {
+      auto level = std::get<2>(*stuff);
+      auto packet = TextPacket::createTranslatedAnnouncement(req["sender"], "[" + req["sender"].get<std::string>() + "]" + req["content"].get<std::string>(), "", "1");
+      level->forEachPlayer([&](Player &player) {
+        if (!player.canUseAbility(AbilitiesIndex::mute))
+          if (auto server_player = dynamic_cast<ServerPlayer *>(&player); server_player) {
+            server_player->sendNetworkPacket(packet);
+          }
+        return true;
+      });
+      return true;
+    }
+    return false;
+  });
 
-  // TODO: chat
+  ins.reg("chat.raw", [](auto client, json req) -> json {
+    if (auto stuff = getStuff(); stuff) {
+      auto level = std::get<2>(*stuff);
+      auto packet = TextPacket::createTranslatedAnnouncement("", req["content"].get<std::string>(), "", "1");
+      level->forEachPlayer([&](Player &player) {
+        if (auto server_player = dynamic_cast<ServerPlayer *>(&player); server_player) {
+          server_player->sendNetworkPacket(packet);
+        }
+        return true;
+      });
+      return true;
+    }
+    return false;
+  });
 
-  std::thread rthread{ [] {
+  modloader_log_hook(+[](modloader_log_level level, const char *tag, const char *content) { Instance<RPC>().emit("core", json::object({{"level", (int)level}, {"tag", tag}, {"content", content}})); });
+
+  std::thread rthread{[] {
     pthread_setname_np(pthread_self(), "APIs");
     Instance<RPC>().start();
     Instance<std::shared_ptr<epoll>>()->wait();
-  } };
+  }};
   rthread.detach();
 });
+
+TClasslessInstanceHook(void, _ZN20ServerNetworkHandler19_displayGameMessageERK6PlayerRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE, Player const &player, std::string const &text) {
+  auto &ins = Instance<RPC>();
+  ins.emit("chat.recv", json::object({{"sender", player.getName()}, {"content", text}}));
+  original(this, player, text);
+}

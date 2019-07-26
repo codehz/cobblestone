@@ -11,6 +11,8 @@ void modloader_vlog(modloader_log_level level, const char *tag, const char *form
 
 const char *modloader_log_level_str(modloader_log_level level);
 
+void modloader_log_hook(void (*fn)(modloader_log_level level, const char *tag, const char *text));
+
 void modloader_logv(const char *tag, const char *format, ...) __attribute__((format(printf, 2, 3)));
 void modloader_logd(const char *tag, const char *format, ...) __attribute__((format(printf, 2, 3)));
 void modloader_logi(const char *tag, const char *format, ...) __attribute__((format(printf, 2, 3)));

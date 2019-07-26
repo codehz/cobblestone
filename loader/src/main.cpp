@@ -71,7 +71,5 @@ static struct Init {
     ModLoader::loadModsFromDirectory("builtin");
     ModLoader::loadModsFromDirectory("data/mods");
     new (dlsym(NULL, "_ZN4Util12EMPTY_STRINGB5cxx11E")) std::string();
-    // printf("%p\n", dlsym(NULL, "_ZN4Util12EMPTY_STRINGB5cxx11E"));
-    // exit(0);
   }
 } init;

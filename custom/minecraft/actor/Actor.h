@@ -34,4 +34,6 @@ public:
   int getEntityTypeId() const;
 
   template <typename T> T *tryGetComponent();
+
+  virtual ~Actor();
 };

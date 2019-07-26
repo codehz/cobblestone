@@ -119,7 +119,26 @@ struct BlockPos {
   float distSqr(float, float, float);
 };
 
-enum class AbilitiesIndex : unsigned short {};
+enum class AbilitiesIndex : unsigned short {
+  build,
+  mine,
+  doorsandswitches,
+  opencontainers,
+  attackplayers,
+  attackmobs,
+  op,
+  teleport,
+  invulnerable,
+  flying,
+  mayfly,
+  instabuild,
+  lightning,
+  flySpeed,
+  walkSpeed,
+  mute,
+  worldbuilder,
+  noclip,
+};
 
 namespace mce {
 struct UUID;
@@ -143,19 +162,19 @@ struct ActorUniqueID {
 };
 
 enum class ItemAcquisitionMethod : int {
-  unknown                = -1,
-  none                   = 0,
-  picked_up              = 1, // ~ Actor::pickUpItem
-  crafted                = 2,
-  taken_from_chest       = 3,
+  unknown = -1,
+  none = 0,
+  picked_up = 1, // ~ Actor::pickUpItem
+  crafted = 2,
+  taken_from_chest = 3,
   taken_from_ender_chest = 4,
-  bought                 = 5,
-  anvil                  = 6,
-  brewed                 = 8,
-  filled                 = 9,
-  trading                = 10,
-  fishing                = 11,
-  container              = 13,
+  bought = 5,
+  anvil = 6,
+  brewed = 8,
+  filled = 9,
+  trading = 10,
+  fishing = 11,
+  container = 13,
 };
 enum class ItemUseMethod : unsigned {};
 
@@ -164,8 +183,7 @@ enum class RegistrationType { SYSTEM, CUSTOM, UNKNOWN };
 template <typename Type, typename Store> struct AutomaticID {
   Store v;
   AutomaticID();
-  AutomaticID(Store v)
-      : v(v) {}
+  AutomaticID(Store v) : v(v) {}
   Store value() const;
   bool operator!=(AutomaticID const &) const;
   bool operator==(AutomaticID const &) const;
@@ -174,33 +192,33 @@ template <typename Type, typename Store> struct AutomaticID {
 };
 
 enum class ActorCategory {
-  None      = 0,
-  Player    = 1 << 0,
-  Mob       = 1 << 1,
-  Monster   = 1 << 2,
+  None = 0,
+  Player = 1 << 0,
+  Mob = 1 << 1,
+  Monster = 1 << 2,
   Humandoid = 1 << 3,
-  Animal    = 1 << 4,
-  Water     = 1 << 5,
-  Pathable  = 1 << 6,
-  Tamable   = 1 << 7,
-  Ridable   = 1 << 8,
+  Animal = 1 << 4,
+  Water = 1 << 5,
+  Pathable = 1 << 6,
+  Tamable = 1 << 7,
+  Ridable = 1 << 8,
   //?? 1 << 9
-  Item      = 1 << 10,
-  Ambient   = 1 << 11,
-  Villager  = 1 << 12,
+  Item = 1 << 10,
+  Ambient = 1 << 11,
+  Villager = 1 << 12,
   Arthropod = 1 << 13,
-  Undead    = 1 << 14,
-  Zombie    = 1 << 15,
-  Minecart  = 1 << 16,
-  Boat      = 1 << 17,
+  Undead = 1 << 14,
+  Zombie = 1 << 15,
+  Minecart = 1 << 16,
+  Boat = 1 << 17,
 
-  BoatRideable     = Boat | Ridable,
+  BoatRideable = Boat | Ridable,
   MinecartRideable = Minecart | Ridable,
   HumandoidMonster = Humandoid | Monster,
-  WaterAnimal      = Water | Animal,
-  TamableAnimal    = Tamable | Animal,
-  UndeadMob        = Undead | Mob,
-  ZombieMonster    = Zombie | Monster,
+  WaterAnimal = Water | Animal,
+  TamableAnimal = Tamable | Animal,
+  UndeadMob = Undead | Mob,
+  ZombieMonster = Zombie | Monster,
 };
 
 class HashedString {
