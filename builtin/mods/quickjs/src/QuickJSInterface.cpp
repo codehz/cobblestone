@@ -8,8 +8,10 @@ QuickJSInterface::~QuickJSInterface() {}
 bool QuickJSInterface::initialize(ScriptReport &) {
   inited = true;
   Log::debug("QuickJS", "initialize");
+  // * RT
   js_runtime = JS_NewRuntime();
   js_context = JS_NewContext(js_runtime);
+  // * System class
   JS_NewClassID(&system_class);
   static JSClassDef system_def = {"MinecraftServerSystem"};
   JS_NewClass(js_runtime, system_class, &system_def);
@@ -19,9 +21,16 @@ bool QuickJSInterface::initialize(ScriptReport &) {
     addition(proto);
   JS_SetClassProto(js_context, system_class, proto);
   autoval global = JS_GetGlobalObject(js_context);
+  // * Preload hooks
   for (auto &preload : quickjs_preloads)
     preload(global);
+  // * globalThis
   JS_SetPropertyStr(js_context, global, "globalThis", global);
+  // * console
+  autoval obj = JS_NewObject(js_context);
+  JS_SetPropertyStr(js_context, obj, "log", JS_NewCFunction(js_context, QuickJSInterface::processLog, "log", 0));
+  JS_SetPropertyStr(js_context, global, "console", obj);
+  obj = JS_UNDEFINED;
   global = JS_UNDEFINED;
   return true;
 }

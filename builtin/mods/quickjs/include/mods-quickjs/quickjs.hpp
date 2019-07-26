@@ -29,14 +29,10 @@ class JavaScriptErrorHandler;
 class ScriptObjectHandle {
 public:
   JSValue value;
-  inline ScriptObjectHandle()
-      : value(JS_UNDEFINED) {}
-  inline ScriptObjectHandle(JSValue &&rhs)
-      : value(rhs) {}
-  inline ScriptObjectHandle(JSValue const &rhs)
-      : value(JS_DupValue(js_context, rhs)) {}
-  inline ScriptObjectHandle(ScriptObjectHandle const &rhs)
-      : value(rhs.value) {}
+  inline ScriptObjectHandle() : value(JS_UNDEFINED) {}
+  inline ScriptObjectHandle(JSValue &&rhs) : value(rhs) {}
+  inline ScriptObjectHandle(JSValue const &rhs) : value(JS_DupValue(js_context, rhs)) {}
+  inline ScriptObjectHandle(ScriptObjectHandle const &rhs) : value(rhs.value) {}
   inline void release() const { JS_FreeValue(js_context, value); }
   inline void release() {
     JS_FreeValue(js_context, value);
@@ -55,7 +51,7 @@ public:
   inline operator JSValue &() { return this->value; }
   inline operator JSValue const &() const { return this->value; }
   inline JSValue transfer() {
-    auto ret    = this->value;
+    auto ret = this->value;
     this->value = JS_UNDEFINED;
     return ret;
   }
@@ -65,10 +61,8 @@ public:
 
 class EventTracking : public ScriptObjectHandle {
 public:
-  inline EventTracking(ScriptObjectHandle &&obj)
-      : ScriptObjectHandle(std::move(obj)) {}
-  inline EventTracking()
-      : ScriptObjectHandle() {}
+  inline EventTracking(ScriptObjectHandle &&obj) : ScriptObjectHandle(std::move(obj)) {}
+  inline EventTracking() : ScriptObjectHandle() {}
 };
 
 class QuickJSInterface {
@@ -100,8 +94,7 @@ public:
   virtual bool getValue(ScriptObjectHandle const &, double &, ScriptReport &);
   virtual bool getValue(ScriptObjectHandle const &, std::string &, ScriptReport &);
   virtual bool getValue(ScriptObjectHandle const &, bool &, ScriptReport &);
-  virtual bool callObjectFunction(ScriptObjectHandle const &, std::string const &, std::vector<ScriptObjectHandle> const &, ScriptObjectHandle &,
-                                  ScriptReport &);
+  virtual bool callObjectFunction(ScriptObjectHandle const &, std::string const &, std::vector<ScriptObjectHandle> const &, ScriptObjectHandle &, ScriptReport &);
   virtual bool callGlobalFunction(ScriptObjectHandle const &, std::vector<ScriptObjectHandle> const &, ScriptObjectHandle &, ScriptReport &);
   virtual bool getHandleType(ScriptObjectHandle const &, ScriptObjectType &, ScriptReport &);
   virtual bool getMemberNames(ScriptObjectHandle const &, std::vector<std::string> &, ScriptReport &);
