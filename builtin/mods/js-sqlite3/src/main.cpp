@@ -94,8 +94,8 @@ static void fill_stmt(JSContext *ctx, sqlite3 *db, sqlite3_stmt *stmt, JSValue &
     auto idx = sqlite3_bind_parameter_index(stmt, keyStr);
     if (idx != 0) {
       if (JS_IsString(value)) {
-        auto vStr = JS_ToCString(ctx, value);
-        sqlite3_bind_text(stmt, idx, vStr, -1, (void (*)(void *))QJS_FreeCString);
+        autostr vStr = JS_ToCString(ctx, value);
+        sqlite3_bind_text(stmt, idx, vStr, -1, SQLITE_TRANSIENT);
       } else if (JS_IsBool(value)) {
         sqlite3_bind_int(stmt, idx, JS_ToBool(ctx, value));
       } else if (JS_IsNull(value) || JS_IsUndefined(value)) {
