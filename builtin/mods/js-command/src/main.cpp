@@ -8,6 +8,7 @@
 #include <minecraft/commands/CommandOrigin.h>
 #include <minecraft/commands/CommandOutput.h>
 #include <minecraft/commands/CommandParameterData.h>
+#include <minecraft/commands/CommandPosition.h>
 #include <minecraft/commands/CommandRegistry.h>
 #include <minecraft/commands/CommandSelector.h>
 #include <minecraft/commands/MinecraftCommands.h>
@@ -85,6 +86,12 @@ IMPL(CommandSelector<Player>) {
     scriptengine->helpDefineActor(*it, item);
     JS_SetPropertyInt64(js_context, ret, idx++, item.transfer());
   }
+  return ret.transfer();
+}
+IMPL(CommandPosition) {
+  Vec3 pos = ((CommandPosition *)self)->getPosition(orig);
+  autohandle ret;
+  scriptengine->helpDefinePosition(pos, ret);
   return ret.transfer();
 }
 
@@ -278,6 +285,8 @@ static JSValue registerCommand(JSContext *ctx, JSValueConst this_val, int argc, 
         mvt.defs.push_back(commonParameter<CommandSelector<Actor>>(pname));
       else if (ptype == "player")
         mvt.defs.push_back(commonParameter<CommandSelector<Player>>(pname));
+      else if (ptype == "position")
+        mvt.defs.push_back(commonParameter<CommandPosition>(pname));
       else
         return JS_ThrowRangeError(js_context, "Parameter type %s hs not been supported", ptype.data());
       if (poptional)

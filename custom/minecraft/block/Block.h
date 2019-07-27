@@ -5,9 +5,12 @@
 #include <memory>
 #include <string>
 
+class Block;
+
 class BlockLegacy {
 public:
   std::string const &getRawNameId() const;
+  Block const *getDefaultState() const;
 };
 
 class Block {
