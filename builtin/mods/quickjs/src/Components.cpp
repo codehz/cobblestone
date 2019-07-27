@@ -74,6 +74,9 @@ IMPL_APPLY(ScriptAttackComponent) {
 
 IMPL_RETRIEVE(ScriptHandContainerComponent) {
   auto slots = actor.getHandContainer().getSlots();
+  if (actor.hasCategory(ActorCategory::Player)) {
+    slots[0] = &((Player &)actor).getCarriedItem();
+  }
   return helpDefineItemSlots(slots, target);
 }
 
