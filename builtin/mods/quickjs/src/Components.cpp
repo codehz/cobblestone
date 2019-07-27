@@ -19,13 +19,13 @@
 #define IMPL_APPLY(name)                                                                                                                                                                               \
   bool name::applyComponentTo(ScriptApi::ScriptVersionInfo const &version, ScriptEngine &engine, ScriptServerContext &ctx, Actor &actor, ScriptApi::ScriptObjectHandle const &target) const
 
-auto helpDefineItemSlots(std::vector<const ItemStack *> const &slots, ScriptApi::ScriptObjectHandle &target) {
+auto helpDefineItemSlots(std::vector<const ItemStack *> const &slots, Actor &actor, std::string const &path, ScriptApi::ScriptObjectHandle &target) {
   target = JS_NewArray(js_context);
   int idx = 0;
   for (auto &slot : slots) {
     ItemInstance instance{*slot};
     autohandle temp = JS_NewObject(js_context);
-    QCHECK(scriptengine->helpDefineItemStack({*slot}, temp));
+    QCHECK(scriptengine->helpDefineItemStackWithPath({*slot}, actor, path, idx, temp));
     QCHECK(scriptengine->setMember(target, idx++, temp.transfer()));
   }
   return true;
@@ -35,7 +35,7 @@ auto helpDefineItemSlots(std::vector<const ItemStack *> const &slots, ScriptApi:
 
 IMPL_RETRIEVE(ScriptArmorContainerComponent) {
   auto slots = actor.getArmorContainer().getSlots();
-  return helpDefineItemSlots(slots, target);
+  return helpDefineItemSlots(slots, actor, "armor", target);
 }
 
 IMPL_RETRIEVE(ScriptAttackComponent) {
@@ -77,7 +77,7 @@ IMPL_RETRIEVE(ScriptHandContainerComponent) {
   if (actor.hasCategory(ActorCategory::Player)) {
     slots[0] = &((Player &)actor).getCarriedItem();
   }
-  return helpDefineItemSlots(slots, target);
+  return helpDefineItemSlots(slots, actor, "hand", target);
 }
 
 IMPL_RETRIEVE(ScriptHotbarContainerComponent) {
@@ -86,17 +86,17 @@ IMPL_RETRIEVE(ScriptHotbarContainerComponent) {
     return false;
   }
   auto slots = ((Player &)actor).getSupplies().getSlots();
-  return helpDefineItemSlots(slots, target);
+  return helpDefineItemSlots(slots, actor, "hotbar", target);
 }
 
 IMPL_RETRIEVE(ScriptInventoryContainerComponent) {
   if (actor.hasCategory(ActorCategory::Player)) {
     auto slots = ((Player &)actor).getSupplies().getSlots();
-    return helpDefineItemSlots(slots, target);
+    return helpDefineItemSlots(slots, actor, "supply", target);
   } else {
     if (auto component = actor.tryGetComponent<ContainerComponent>(); component) {
       auto slots = component->getSlots();
-      return helpDefineItemSlots(slots, target);
+      return helpDefineItemSlots(slots, actor, "container", target);
     } else {
       scriptengine->getScriptReportQueue().addError("Target entity don't have container component");
       return false;

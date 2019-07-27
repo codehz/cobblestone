@@ -1,7 +1,13 @@
 #include <mods-quickjs/quickjs.hpp>
 
 #include <minecraft/actor/Actor.h>
+#include <minecraft/actor/Player.h>
+#include <minecraft/actor/PlayerInventoryProxy.h>
 #include <minecraft/block/BlockSource.h>
+#include <minecraft/component/ContainerComponent.h>
+#include <minecraft/container/SimpleContainer.h>
+#include <minecraft/item/ItemInstance.h>
+#include <minecraft/item/ItemStack.h>
 #include <minecraft/level/Level.h>
 #include <minecraft/level/TickingArea.h>
 #include <minecraft/script/EventInfo.h>
@@ -180,4 +186,92 @@ bool ScriptEngineWithContext<ScriptServerContext>::getBlock(ScriptApi::ScriptVer
     getScriptReportQueue().addWarning("Failed to get template binder for ticking area");
     return false;
   }
+}
+
+bool ScriptEngineWithContext<ScriptServerContext>::helpDefineItemStackWithPath(ItemInstance const &item, Actor const &actor, std::string const &type, int idx, ScriptApi::ScriptObjectHandle &target) {
+  QCHECK(helpDefineItemStack(item, target));
+  autohandle path_obj = JS_NewObject(js_context);
+  autohandle actor_obj = JS_NewObject(js_context);
+  QCHECK(helpDefineActor(actor, actor_obj));
+  QCHECK(setMember(path_obj, "owner", actor_obj.transfer()));
+  QCHECK(setMember(path_obj, "type", type));
+  QCHECK(setMember(path_obj, "index", idx));
+  QCHECK(setMember(target, "__path__", path_obj.transfer()));
+  return true;
+}
+
+bool ScriptEngineWithContext<ScriptServerContext>::helpGetItemStackFromPath(ItemInstance &result, ScriptApi::ScriptObjectHandle const &source) {
+  autoval path_obj = JS_GetPropertyStr(js_context, source, "__path__");
+  QCHECK(JS_IsObject(path_obj));
+  autoval actor_obj = JS_GetPropertyStr(js_context, path_obj, "owner");
+  Actor *actor = nullptr;
+  std::string type;
+  int32_t idx;
+  QCHECK(helpGetActor(actor_obj, &actor) && getMember(path_obj, "type", type) && getMember(path_obj, "index", idx));
+  if (type == "hand") {
+    if (idx == 0 && actor->hasCategory(ActorCategory::Player)) {
+      result = ItemInstance{((Player *)actor)->getCarriedItem()};
+      return true;
+    }
+    auto slots = actor->getHandContainer().getSlots();
+    if (idx >= 0 && idx < (int)slots.size()) {
+      result = ItemInstance{*slots[idx]};
+      return true;
+    }
+  } else if (type == "hotbar" || type == "supply") {
+    if (actor->hasCategory(ActorCategory::Player)) {
+      auto slots = ((Player *)actor)->getSupplies().getSlots();
+      if (idx >= 0 && idx < (int)slots.size()) {
+        result = ItemInstance{*slots[idx]};
+        return true;
+      }
+    }
+  } else if (type == "container") {
+    if (auto component = actor->tryGetComponent<ContainerComponent>(); component) {
+      auto slots = component->getSlots();
+      if (idx >= 0 && idx < (int)slots.size()) {
+        result = ItemInstance{*slots[idx]};
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool ScriptEngineWithContext<ScriptServerContext>::helpApplyItemStackWithPath(ItemInstance const &item, ScriptApi::ScriptObjectHandle const &source) {
+  autoval path_obj = JS_GetPropertyStr(js_context, source, "__path__");
+  QCHECK(JS_IsObject(path_obj));
+  autoval actor_obj = JS_GetPropertyStr(js_context, path_obj, "owner");
+  Actor *actor = nullptr;
+  std::string type;
+  int32_t idx;
+  QCHECK(helpGetActor(actor_obj, &actor) && getMember(path_obj, "type", type) && getMember(path_obj, "index", idx));
+  if (type == "hand") {
+    if (idx == 0 && actor->hasCategory(ActorCategory::Player)) {
+      ((Player *)actor)->setCarriedItem({item});
+      return true;
+    }
+    auto &container = actor->getHandContainer();
+    if (idx >= 0 && idx < (int)container.getContainerSize()) {
+      container.setItem(idx, {item});
+      return true;
+    }
+  } else if (type == "hotbar" || type == "supply") {
+    if (actor->hasCategory(ActorCategory::Player)) {
+      auto &container = ((Player *)actor)->getSupplies();
+      if (idx >= 0 && idx < (int)container.getSlots().size()) {
+        container.setItem(idx, {item}, (ContainerID)0);
+        return true;
+      }
+    }
+  } else if (type == "container") {
+    if (auto component = actor->tryGetComponent<ContainerComponent>(); component) {
+      auto slots = component->getSlots();
+      if (idx >= 0 && idx < (int)slots.size()) {
+        component->setItem(idx, {item});
+        return true;
+      }
+    }
+  }
+  return false;
 }

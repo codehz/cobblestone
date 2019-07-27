@@ -44,7 +44,7 @@ public:
   class Component {
   public:
     bool applyComponentTo(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, ScriptApi::ScriptObjectHandle const &,
-                          ScriptApi::ScriptObjectHandle const &) const;
+                          ScriptApi::ScriptObjectHandle const &) const PATCHABLE;
     bool retrieveComponentFrom(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, ScriptApi::ScriptObjectHandle const &,
                                ScriptApi::ScriptObjectHandle &) const PATCHABLE;
     bool hasComponent(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, ScriptApi::ScriptObjectHandle const &,

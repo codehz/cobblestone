@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 class Item;
 
 class ItemStack;
@@ -10,7 +13,10 @@ class ItemInstance {
 public:
   ItemInstance();
   ItemInstance(ItemStack const &);
-  inline ~ItemInstance() {
-    asm("call _ZN12ItemInstanceD2Ev@plt");
-  }
+
+  ItemInstance &operator=(ItemInstance const &);
+
+  std::vector<std::string> getCustomLore() const;
+  void setCustomLore(std::vector<std::string> const &);
+  inline ~ItemInstance() { asm("call _ZN12ItemInstanceD2Ev"); }
 };

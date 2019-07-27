@@ -105,3 +105,19 @@ public:
   static std::string TAG;
   unsigned getIdentifier() const;
 };
+
+
+class ScriptItemStackBinderComponent : public ScriptBinderComponent {
+  unsigned count, stacksize;
+  std::string name;
+
+public:
+  ScriptItemStackBinderComponent();
+
+  virtual ~ScriptItemStackBinderComponent();
+  virtual bool serialize(ScriptEngine &, ScriptApi::ScriptObjectHandle const &) const;
+  virtual bool deserialize(ScriptEngine &, ScriptApi::ScriptObjectHandle const &);
+
+  static std::string TAG;
+  unsigned getIdentifier() const;
+};

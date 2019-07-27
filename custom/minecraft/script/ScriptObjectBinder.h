@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../core/typeid.h"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -16,6 +18,8 @@ class ScriptObjectHandle;
 }
 
 class ScriptObjectBinder {
+  bool _hasComponent(ushort) const;
+
 public:
   static std::string TYPE_TAG;
   std::string type;
@@ -27,6 +31,9 @@ public:
   static std::unique_ptr<ScriptObjectBinder> extract(ScriptEngine &, ScriptApi::ScriptObjectHandle const &);
 
   template <typename T> T const *getComponent() const;
-  template <typename T> bool hasComponent() const;
+  template <typename T> bool hasComponent() const {
+    auto id = type_id<ScriptBinderComponent, T>();
+    return _hasComponent(id.value);
+  }
   template <typename T, typename... RS> void addComponent(RS...);
 };

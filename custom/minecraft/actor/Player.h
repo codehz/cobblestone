@@ -9,8 +9,9 @@ class Player : public Actor {
 public:
   MakeAccessor(getName, std::string, 7224);
   bool canUseAbility(AbilitiesIndex) const;
-  PlayerInventoryProxy const &getSupplies() const;
+  PlayerInventoryProxy &getSupplies() const;
   ItemStack &getCarriedItem() const;
+  void setCarriedItem(ItemStack const&);
 };
 
 class ServerPlayer : public Player {

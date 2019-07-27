@@ -31,7 +31,7 @@ public:
   bool openContainer(Player &);
   int countItemsOfType(ItemStack const &);
   void removeItemsOfType(ItemStack const &);
-  void setItem(ItemStack const &, int);
+  void setItem(int, ItemStack const &);
   void dropContents(BlockSource &, Vec3 const &, bool);
   bool hasRoomForItem(ItemActor &);
   void rebuildContainer(ContainerType, int, bool, int, bool);

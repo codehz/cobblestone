@@ -6,5 +6,5 @@ class ItemStack;
 
 class ItemActor : public Actor {
 public:
-  ItemStack const &getItemStack();
+  ItemStack &getItemStack();
 };

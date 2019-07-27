@@ -3,6 +3,7 @@
 #include <vector>
 
 class ItemStack;
+enum class ContainerID;
 
 class PlayerInventoryProxy {
 public:
@@ -12,4 +13,5 @@ public:
   void clearInventoryWithDefault(bool);
   int getHotbarSize();
   std::vector<ItemStack const *> getSlots() const;
+  void setItem(int, ItemStack const &, ContainerID);
 };
