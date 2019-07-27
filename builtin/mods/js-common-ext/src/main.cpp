@@ -3,6 +3,7 @@
 #include <minecraft/block/Block.h>
 #include <minecraft/block/BlockSource.h>
 #include <minecraft/block/BlockTypeRegistry.h>
+#include <minecraft/core/WeakPtr.h>
 #include <minecraft/script/ScriptBinderComponent.h>
 #include <minecraft/script/ScriptVersionInfo.h>
 #include <minecraft/script/details/BinderTemplates.h>
@@ -55,8 +56,7 @@ static bool setExtraBlock(ScriptApi::ScriptVersionInfo const &version, Block con
     auto level_ticking = binder->getComponent<ScriptLevelAreaBinderComponent>();
     auto actor_ticking = binder->getComponent<ScriptActorAreaBinderComponent>();
     if (auto source = scriptengine->_helpGetBlockSourceFromBinder(*scriptengine->getScriptServerContext().level, level_ticking, actor_ticking); source) {
-      source->setExtraBlock(pos, block, 0);
-      return true;
+      return source->setExtraBlock(pos, block, 0);
     } else {
       scriptengine->getScriptReportQueue().addWarning("Failed to get block source");
       return false;
@@ -81,7 +81,7 @@ static JSValue processSetBlock(JSContext *ctx, JSValueConst this_val, int argc, 
         !scriptengine->getValue(argv[4], pos.z))
       return JS_ThrowTypeError(ctx, "Require (object, string, number, number, number)");
   }
-  auto ptr = BlockTypeRegistry::lookupByName(name).lock();
+  auto ptr = BlockTypeRegistry::lookupByName(name);
   if (ptr) {
     if (setBlock(version, *ptr->getDefaultState(), pos, argv[0])) {
       return JS_UNDEFINED;
@@ -122,7 +122,7 @@ static JSValue processSetExtraBlock(JSContext *ctx, JSValueConst this_val, int a
         !scriptengine->getValue(argv[4], pos.z))
       return JS_ThrowTypeError(ctx, "Require (object, string, number, number, number)");
   }
-  auto ptr = BlockTypeRegistry::lookupByName(name).lock();
+  auto ptr = BlockTypeRegistry::lookupByName(name);
   if (ptr) {
     if (setExtraBlock(version, *ptr->getDefaultState(), pos, argv[0])) {
       return JS_UNDEFINED;
@@ -141,3 +141,5 @@ static JSCFunctionListEntry funcs[] = {
 static void entry(JSValue const &server) { JS_SetPropertyFunctionList(js_context, server, funcs, countof(funcs)); }
 
 LAZY(register, quickjs_proto_extras.emplace_back(entry));
+
+THook(bool, _ZNK11BlockLegacy15canBeExtraBlockEv) { return true; }

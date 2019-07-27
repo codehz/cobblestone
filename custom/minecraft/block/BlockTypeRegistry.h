@@ -1,11 +1,12 @@
 #pragma once
 
-#include <memory>
 #include <string>
+
+template <typename> class WeakPtr;
 
 class BlockLegacy;
 
 class BlockTypeRegistry {
 public:
-  static std::weak_ptr<BlockLegacy> lookupByName(std::string const &);
+  static WeakPtr<BlockLegacy> lookupByName(std::string const &);
 };
