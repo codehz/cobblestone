@@ -16,6 +16,7 @@ class PlayerInventoryProxy;
 class BlockSource;
 class TickingArea;
 class CompoundTag;
+class Dimension;
 
 class Actor {
 public:
@@ -32,6 +33,9 @@ public:
   TickingArea *getTickingArea();
   bool save(CompoundTag &);
   int getEntityTypeId() const;
+
+  void changeDimension(AutomaticID<Dimension, int>, bool);
+  int getDimensionId() const;
 
   template <typename T> T *tryGetComponent();
 
