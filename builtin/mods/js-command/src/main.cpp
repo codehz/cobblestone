@@ -161,6 +161,10 @@ struct CustomCommand : Command {
       else
         outp.error("Unknown error");
     } else {
+      if (JS_IsUndefined(ret)) {
+        outp.success();
+        return;
+      }
       autostr txt = JS_ToCString(js_context, ret);
       if (txt)
         outp.success(txt);
