@@ -5,14 +5,22 @@
 #include <minecraft/packet/TextPacket.h>
 
 static JSValue sendText(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
-  if (argc != 2)
-    return JS_ThrowTypeError(ctx, "Require 2 arguments");
+  if (argc != 2 && argc != 3 && argc != 4)
+    return JS_ThrowTypeError(ctx, "Require 2 or 3 arguments");
   Actor *actor;
-  std::string content;
+  std::string content, sender;
+  int flag = 8;
   if (!scriptengine->helpGetActor(argv[0], &actor) || !scriptengine->getValue(argv[1], content))
     return JS_ThrowTypeError(ctx, "Require (actor, string)");
+  if (argc >= 3 && !scriptengine->getValue(argv[2], flag))
+    return JS_ThrowTypeError(ctx, "Require (actor, string, number)");
+  if (argc >= 4 && !scriptengine->getValue(argv[3], sender))
+    return JS_ThrowTypeError(ctx, "Require (actor, string, number, string)");
   if (ServerPlayer *player = dynamic_cast<ServerPlayer *>(actor); player) {
     auto packet = TextPacket::createTranslatedAnnouncement("", content, "", "1");
+    packet.type() = flag;
+    if (sender.size())
+      packet.sender() = sender;
     player->sendNetworkPacket(packet);
     return JS_UNDEFINED;
   } else

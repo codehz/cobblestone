@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../aux.h"
 #include "Packet.h"
 
 class TextPacket : public Packet {
@@ -7,6 +8,9 @@ class TextPacket : public Packet {
 
 public:
   TextPacket();
+
+  MakeAccessor(type, char, 32);
+  MakeAccessor(sender, std::string, 40);
 
   virtual ~TextPacket();
   virtual int getId() const override;
