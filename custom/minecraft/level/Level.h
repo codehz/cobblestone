@@ -16,6 +16,7 @@ class BlockActor;
 class Dimension;
 class PlayerListEntry;
 class Player;
+class BlockPalette;
 
 class BlockSourceListener {
 public:
@@ -36,14 +37,11 @@ public:
   void spawnParticleEffect(std::string const &, Actor const &, Vec3 const &);
   void forEachDimension(std::function<bool(Dimension &)>);
   float getChunkTickRange() const;
-
   Actor *fetchEntity(ActorUniqueID, bool) const;
-
   std::unordered_map<mce::UUID, PlayerListEntry> &getPlayerList();
-
   static bool isUsableLevel(Level *);
-
   void forEachPlayer(std::function<bool(Player &)>);
+  BlockPalette *getGlobalBlockPalette();
 
   // ~ level-helper ~ //
   std::vector<std::unique_ptr<Actor>> &getActorVector() const ABITAG(level_helper);
