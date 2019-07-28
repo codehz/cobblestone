@@ -90,7 +90,7 @@ IMPL(CommandSelector<Player>) {
 }
 IMPL(CommandPosition) {
   Vec3 pos = ((CommandPosition *)self)->getPosition(orig);
-  autohandle ret;
+  autohandle ret = JS_NewObject(js_context);
   scriptengine->helpDefinePosition(pos, ret);
   return ret.transfer();
 }
