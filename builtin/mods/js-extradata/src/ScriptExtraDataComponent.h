@@ -6,6 +6,9 @@
 
 class ScriptExtraDataComponent : public ScriptTemplateFactory<ScriptServerContext>::Component, public AdvanceComponent {
 public:
+  using ScriptTemplateFactory<ScriptServerContext>::Component::applyComponentTo;
+  using AdvanceComponent::applyComponentTo;
+
   using ScriptTemplateFactory<ScriptServerContext>::Component::retrieveComponentFrom;
   using AdvanceComponent::retrieveComponentFrom;
 
@@ -18,15 +21,12 @@ public:
   virtual ~ScriptExtraDataComponent() override;
 
   // * Actor * //
-  virtual bool applyComponentTo(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, Actor &,
-                                ScriptApi::ScriptObjectHandle const &) const override;
-  virtual bool retrieveComponentFrom(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, Actor &,
-                                     ScriptApi::ScriptObjectHandle &) const override;
+  virtual bool applyComponentTo(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, Actor &, ScriptApi::ScriptObjectHandle const &) const override;
+  virtual bool retrieveComponentFrom(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, Actor &, ScriptApi::ScriptObjectHandle &) const override;
   virtual bool hasComponent(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, Actor &, bool &) const override;
 
   // * Block * //
-  virtual bool retrieveComponentFrom(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, Block const &, BlockSource &,
-                                     BlockPos &, ScriptApi::ScriptObjectHandle &) const override;
-  virtual bool hasComponent(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, Block const &, BlockSource &, BlockPos &,
-                            bool &) const override;
+  virtual bool retrieveComponentFrom(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, Block const &, BlockSource &, BlockPos &,
+                                     ScriptApi::ScriptObjectHandle &) const override;
+  virtual bool hasComponent(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, Block const &, BlockSource &, BlockPos &, bool &) const override;
 };
