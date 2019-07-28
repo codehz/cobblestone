@@ -6,6 +6,7 @@
 #include <minecraft/commands/MinecraftCommands.h>
 #include <minecraft/core/Minecraft.h>
 #include <minecraft/script/EventInfo.h>
+#include <minecraft/script/ScriptBinderEventDataTemplate.h>
 
 #include "MyScriptCommandOrigin.hpp"
 
@@ -226,10 +227,12 @@ std::unordered_map<std::string, std::vector<ScriptApi::EventTracking>> &ScriptEn
 }
 
 bool ScriptEngine::fireEventToScript(EventInfo const &info, ScriptApi::ScriptObjectHandle &&obj) {
+  autohandle handle = JS_NewObject(js_context);
+  ScriptBinderEventDataTemplate::build(info.data, obj.value)->serialize(*scriptengine, handle);
   auto it = getEventTrackings().find(info.data);
   if (it != getEventTrackings().end()) {
     for (auto &item : it->second) {
-      JS_FreeValue(js_context, JS_Call(js_context, item, JS_UNDEFINED, 1, &obj.value));
+      JS_FreeValue(js_context, JS_Call(js_context, item, JS_UNDEFINED, 1, &handle.value));
       handle_exception(js_context, "fireEventToScript");
     }
   }
