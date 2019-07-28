@@ -1,12 +1,14 @@
 #pragma once
 
-#include "Actor.h"
+#include "Mob.h"
 
 class Packet;
 class ItemStack;
 
-class Player : public Actor {
+class Player : public Mob {
 public:
+  virtual ~Player() override;
+
   MakeAccessor(getName, std::string, 7224);
   bool canUseAbility(AbilitiesIndex) const;
   PlayerInventoryProxy &getSupplies() const;
@@ -14,6 +16,7 @@ public:
   void setCarriedItem(ItemStack const &);
 
   unsigned char getPlayerPermissionLevel() const;
+  unsigned char getCommandPermissionLevel() const;
 };
 
 class ServerPlayer : public Player {
