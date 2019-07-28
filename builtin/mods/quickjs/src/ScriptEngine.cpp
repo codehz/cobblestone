@@ -29,7 +29,17 @@ INLINE void call_lifetime_hook(char const *name) {
   }
 }
 
-TInstanceHook(void, _ZN12ScriptEngine24_processSystemInitializeEv, ScriptEngine) { call_lifetime_hook("initialize"); }
+TInstanceHook(void, _ZN12ScriptEngine24_processSystemInitializeEv, ScriptEngine) {
+  for (auto &system : ifce->systems) {
+    autoval func = JS_GetPropertyStr(js_context, system, "initialize");
+    if (JS_IsFunction(js_context, func)) {
+      JS_FreeValue(js_context, JS_Call(js_context, func, system, 0, nullptr));
+      handle_exception(js_context, "initialize");
+      autoatom f = JS_NewAtom(js_context, "initialize");
+      JS_DeleteProperty(js_context, system, f, 0);
+    }
+  }
+}
 TInstanceHook(void, _ZN12ScriptEngine20_processSystemUpdateEv, ScriptEngine) { call_lifetime_hook("update"); }
 TInstanceHook(void, _ZN12ScriptEngine22_processSystemShutdownEv, ScriptEngine) { call_lifetime_hook("shutdown"); }
 
