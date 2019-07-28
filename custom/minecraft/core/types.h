@@ -146,8 +146,6 @@ struct UUID;
 
 struct ActorUniqueID {
   int64_t data;
-  ActorUniqueID(int64_t);
-  ActorUniqueID();
 
   static ActorUniqueID fromClientId(int64_t);
   static ActorUniqueID fromUUID(mce::UUID const &);

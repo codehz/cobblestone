@@ -7,7 +7,7 @@
 TInstanceHook(bool, _ZNK3Mob14isFrostWalkingEv, Mob) {
   if (this->hasCategory(ActorCategory::Player)) {
     auto player = (Player *)this;
-    if (player->getCommandPermissionLevel() == 0)
+    if (player->getPlayerPermissionLevel() == 0)
       return false;
   }
   return original(this);
@@ -16,7 +16,7 @@ TInstanceHook(bool, _ZNK3Mob14isFrostWalkingEv, Mob) {
 TInstanceHook(void, _ZN3Mob9frostWalkEv, Mob) {
   if (this->hasCategory(ActorCategory::Player)) {
     auto player = (Player *)this;
-    if (player->getCommandPermissionLevel() == 0)
+    if (player->getPlayerPermissionLevel() == 0)
       return;
   }
   original(this);

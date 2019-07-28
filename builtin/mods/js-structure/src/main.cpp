@@ -3,6 +3,7 @@
 
 #include <minecraft/core/NBT.h>
 #include <minecraft/level/Level.h>
+#include <minecraft/structure/StructureBlockPalette.h>
 #include <minecraft/structure/StructureSettings.h>
 #include <minecraft/structure/StructureTemplate.h>
 
@@ -12,15 +13,31 @@ std::unique_ptr<CompoundTag> getStructure(BlockSource &source, BlockPos src, Blo
   settings.offset = {};
   settings.size = size;
   temp.fillFromWorld(source, src, settings);
+  if (!temp.isLoaded())
+    return nullptr;
   return temp.save();
 }
-bool setStructure(BlockSource &source, BlockPos src, CompoundTag const &data) {
-  StructureTemplate temp;
-  StructureSettings settings;
+bool setStructure(BlockSource &source, BlockPos const &src, CompoundTag const &data) {
+  StructureTemplate temp{};
+  StructureSettings settings{};
   settings.offset = {};
   auto palette = scriptengine->getScriptServerContext().level->getGlobalBlockPalette();
   QCHECK(temp.load(data));
-  temp.placeInWorld(source, *palette, src, settings);
+  BlockSource *psource = &source;
+  BlockPos const *psrc = &src;
+  StructureTemplate *ptemp = &temp;
+  StructureSettings *psettings = &settings;
+  asm(R"asm(
+    mov %0, %%r8
+    mov %1, %%rcx
+    mov %2, %%rdx
+    mov %3, %%rsi
+    mov %4, %%rdi
+    call _ZNK17StructureTemplate12placeInWorldER11BlockSourceRK12BlockPalette8BlockPosRK17StructureSettings@plt
+  )asm"
+      :
+      : "m"(psettings), "m"(psrc), "m"(palette), "m"(psource), "r"(ptemp)
+      : "rax", "rdi", "rsi", "rdx", "rcx", "r8");
   return true;
 }
 
@@ -40,17 +57,19 @@ static JSValue processGetStructure(JSContext *ctx, JSValueConst this_val, int ar
   BlockPos pos, size;
   if (!source || !scriptengine->helpGetPosition(argv[1], pos) || !scriptengine->helpGetPosition(argv[2], size))
     return JS_ThrowTypeError(js_context, "Require (ticking_area, pos, size)");
-  return create_tag(getStructure(*source, pos, size));
+  if (auto temp = getStructure(*source, pos, size); temp)
+    return create_tag(std::move(temp));
+  return JS_ThrowInternalError(js_context, "failed to save structure");
 }
 
 static JSValue processSetStructure(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
-  if (argc != 4)
+  if (argc != 3)
     return JS_ThrowTypeError(js_context, "Require 3 argument");
   BlockSource *source = getBlockSource(argv[0]);
   BlockPos pos;
   if (!source || !scriptengine->helpGetPosition(argv[1], pos) || !JS_IsObject(argv[2]))
     return JS_ThrowTypeError(js_context, "Require (ticking_area, pos, data)");
-  auto data = from_tag(argv[4]);
+  auto data = from_tag(argv[2]);
   if (!data)
     return JS_ThrowTypeError(js_context, "Failed to decode structure data");
   if (auto comp = dynamic_cast<CompoundTag *>(&*data)) {
@@ -64,9 +83,11 @@ static JSValue processSetStructure(JSContext *ctx, JSValueConst this_val, int ar
 
 static JSCFunctionListEntry funcs[] = {
     JS_CFUNC_DEF("getStructure", 3, &processGetStructure),
-    JS_CFUNC_DEF("setStructure", 4, &processSetStructure),
+    JS_CFUNC_DEF("setStructure", 3, &processSetStructure),
 };
 
 static void entry(JSValue const &server) { JS_SetPropertyFunctionList(js_context, server, funcs, countof(funcs)); }
 
 LAZY(register, quickjs_proto_extras.emplace_back(entry));
+
+THook(bool, _ZNK14FeatureToggles9isEnabledE15FeatureOptionID) { return true; }

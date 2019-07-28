@@ -17,4 +17,5 @@ struct StructureSettings {
   unsigned integrity_seed;       // 80
 
   StructureSettings();
+  inline ~StructureSettings() { asm("call _ZN17StructureSettingsD2Ev"); }
 };

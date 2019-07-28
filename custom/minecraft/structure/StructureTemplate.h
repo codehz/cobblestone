@@ -8,10 +8,12 @@ struct StructureSettings;
 
 class StructureTemplate {
   std::string name;
-  StructureTemplateData data;
 
 public:
-  inline StructureTemplate(std::string const &name = "") : name(name) {}
+  StructureTemplateData data;
+  inline StructureTemplate(std::string const &name = "default") : name(name) {}
+
+  bool isLoaded() const;
 
   std::unique_ptr<CompoundTag> save() const;
   bool load(CompoundTag const &);
