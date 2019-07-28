@@ -171,6 +171,7 @@ public:
 
 // ~ player_attack_entity ~ //
 TInstanceHook(bool, _ZN6Player6attackER5Actor, Player, Actor *target) {
+  if (this->getCommandPermissionLevel() == 0) return false;
   ScriptPlayerAttackActorPolicy policy(this, target);
   Instance<PolicyManager>().dispatch(policy);
   if (!policy.result)
@@ -187,6 +188,7 @@ TInstanceHook(bool, _ZN5Actor10pickUpItemER9ItemActor, Actor, ItemActor *item) {
   return original(this, item);
 }
 TInstanceHook(bool, _ZN6Player4takeER5Actorii, Player, Actor &actor, int a, int b) {
+  if (this->getCommandPermissionLevel() == 0) return false;
   if (actor.hasCategory(ActorCategory::Item)) {
     ScriptActorPickItemUpPolicy policy(this, ((ItemActor &)actor).getItemStack());
     Instance<PolicyManager>().dispatch(policy);
@@ -214,6 +216,7 @@ TInstanceHook(void, _ZN5Actor11dropTowardsERK9ItemStack4Vec3, Actor, ItemStack c
 
 // ~ player_use_item ~ //
 TInstanceHook(bool, _ZN8GameMode7useItemER9ItemStack, GameMode, ItemStack &stack) {
+  if (this->getPlayer()->getCommandPermissionLevel() == 0) return false;
   ScriptPlayerUseItemPolicy policy(this->getPlayer(), stack);
   Instance<PolicyManager>().dispatch(policy);
   if (!policy.result)
@@ -223,6 +226,7 @@ TInstanceHook(bool, _ZN8GameMode7useItemER9ItemStack, GameMode, ItemStack &stack
 
 // ~ player_use_item_on ~ //
 TInstanceHook(bool, _ZN8GameMode9useItemOnER9ItemStackRK8BlockPoshRK4Vec3PK5Block, GameMode, ItemStack &stack, BlockPos const &pos, unsigned char unch, Vec3 const &vec, Block const *block) {
+  if (this->getPlayer()->getCommandPermissionLevel() == 0) return false;
   ScriptPlayerUseItemOnPolicy policy(this->getPlayer(), pos, vec, stack, block);
   Instance<PolicyManager>().dispatch(policy);
   if (!policy.result)
@@ -232,6 +236,7 @@ TInstanceHook(bool, _ZN8GameMode9useItemOnER9ItemStackRK8BlockPoshRK4Vec3PK5Bloc
 
 // ~ player_destroy_block ~ //
 TInstanceHook(bool, _ZN8GameMode12destroyBlockERK8BlockPosh, GameMode, BlockPos const &pos, unsigned char flag) {
+  if (this->getPlayer()->getCommandPermissionLevel() == 0) return false;
   ScriptPlayerDestroyBlockPolicy policy(this->getPlayer(), pos);
   Instance<PolicyManager>().dispatch(policy);
   if (!policy.result)
