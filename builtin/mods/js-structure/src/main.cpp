@@ -14,7 +14,7 @@ std::unique_ptr<CompoundTag> getStructure(BlockSource &source, BlockPos src, Blo
   temp.fillFromWorld(source, src, settings);
   return temp.save();
 }
-bool setStructure(BlockSource &source, BlockPos src, std::unique_ptr<CompoundTag> const &data) {
+bool setStructure(BlockSource &source, BlockPos src, CompoundTag const &data) {
   StructureTemplate temp;
   StructureSettings settings;
   settings.offset = {};
@@ -53,14 +53,18 @@ static JSValue processSetStructure(JSContext *ctx, JSValueConst this_val, int ar
   auto data = from_tag(argv[4]);
   if (!data)
     return JS_ThrowTypeError(js_context, "Failed to decode structure data");
-  if (!setStructure(*source, pos, (std::unique_ptr<CompoundTag> const &)data))
-    return JS_ThrowInternalError(js_context, "failed to load structure");
+  if (auto comp = dynamic_cast<CompoundTag *>(&*data)) {
+    if (!setStructure(*source, pos, *comp))
+      return JS_ThrowInternalError(js_context, "failed to load structure");
+  } else {
+    return JS_ThrowTypeError(js_context, "Failed to decode structure data: require CompoundTag");
+  }
   return JS_UNDEFINED;
 }
 
 static JSCFunctionListEntry funcs[] = {
-  JS_CFUNC_DEF("getStructure", 3, &processGetStructure),
-  JS_CFUNC_DEF("setStructure", 4, &processSetStructure),
+    JS_CFUNC_DEF("getStructure", 3, &processGetStructure),
+    JS_CFUNC_DEF("setStructure", 4, &processSetStructure),
 };
 
 static void entry(JSValue const &server) { JS_SetPropertyFunctionList(js_context, server, funcs, countof(funcs)); }

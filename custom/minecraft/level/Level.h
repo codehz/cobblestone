@@ -41,7 +41,7 @@ public:
   std::unordered_map<mce::UUID, PlayerListEntry> &getPlayerList();
   static bool isUsableLevel(Level *);
   void forEachPlayer(std::function<bool(Player &)>);
-  BlockPalette *getGlobalBlockPalette();
+  BlockPalette *getGlobalBlockPalette() const;
 
   // ~ level-helper ~ //
   std::vector<std::unique_ptr<Actor>> &getActorVector() const ABITAG(level_helper);

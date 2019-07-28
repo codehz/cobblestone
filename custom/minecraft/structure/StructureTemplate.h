@@ -13,8 +13,8 @@ class StructureTemplate {
 public:
   inline StructureTemplate(std::string const &name = "") : name(name) {}
 
-  std::unique_ptr<CompoundTag> save();
-  bool load(std::unique_ptr<CompoundTag> const &);
+  std::unique_ptr<CompoundTag> save() const;
+  bool load(CompoundTag const &);
 
   bool placeInWorld(BlockSource &, BlockPalette const &, BlockPos, StructureSettings const &) const;
   void fillFromWorld(BlockSource &, BlockPos const &, StructureSettings const &);

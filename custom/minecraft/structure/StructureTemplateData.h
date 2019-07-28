@@ -16,6 +16,6 @@ public:
   void setStructureWorldOrigin(BlockPos const &);
   void setSize(BlockPos const &);
 
-  std::unique_ptr<CompoundTag> save();
-  bool load(std::unique_ptr<CompoundTag> const &);
+  std::unique_ptr<CompoundTag> save() const;
+  bool load(CompoundTag const &);
 };
