@@ -11,7 +11,9 @@ public:
   bool canUseAbility(AbilitiesIndex) const;
   PlayerInventoryProxy &getSupplies() const;
   ItemStack &getCarriedItem() const;
-  void setCarriedItem(ItemStack const&);
+  void setCarriedItem(ItemStack const &);
+
+  unsigned char getPlayerPermissionLevel() const;
 };
 
 class ServerPlayer : public Player {
