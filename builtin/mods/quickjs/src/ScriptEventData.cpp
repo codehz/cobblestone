@@ -126,13 +126,9 @@ IMPL(ScriptServerBlockDestructionStoppedEvent) {
 }
 
 IMPL(ScriptServerBlockInteractedWithEvent) {
-  Log::debug("Scripting", "HIT1");
   PREPARE_OBJECT(handle);
-  Log::debug("Scripting", "HIT2");
   FOR_ENTITY("player", entity);
-  Log::debug("Scripting", "HIT3");
   FOR_POS("block_position", pos);
-  Log::debug("Scripting", "HIT4");
   return true;
 }
 
