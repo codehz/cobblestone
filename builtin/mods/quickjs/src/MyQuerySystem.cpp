@@ -3,12 +3,13 @@
 
 #include <minecraft/level/Level.h>
 #include <minecraft/script/ScriptVersionInfo.h>
+#include <minecraft/script/WORKAROUNDS.h>
 
 ScriptApi::ScriptObjectHandle MyQuerySystem::queryEntities(int identifier) {
   if (identifier >= (int)queries.size())
     return JS_ThrowRangeError(js_context, "Not a valid query identifier");
   auto &query = queries[identifier];
-  auto hasFilter = query.filter.empty();
+  auto hasFilter = !query.filter.empty();
   ScriptApi::ScriptObjectHandle ret = JS_NewArray(js_context);
   ScriptApi::ScriptVersionInfo version;
   int idx = 0;
@@ -16,10 +17,9 @@ ScriptApi::ScriptObjectHandle MyQuerySystem::queryEntities(int identifier) {
     autohandle temp = JS_NewObject(js_context);
     scriptengine->helpDefineActor(*actor, temp);
     if (hasFilter) {
-      bool ok = true;
       for (auto const &filter : query.filter) {
-        scriptengine->hasComponent(version, temp, filter, ok);
-        if (!ok)
+        bool ok = false;
+        if (!scriptengine->hasComponent(version, temp, filter, ok) || !ok)
           return true;
       }
     }
@@ -72,8 +72,8 @@ ScriptApi::ScriptObjectHandle MyQuerySystem::queryEntities(int identifier, doubl
     }
     if (hasFilter) {
       for (auto const &filter : query.filter) {
-        scriptengine->hasComponent(version, temp, filter, ok);
-        if (!ok)
+        ok = false;
+        if (!scriptengine->hasComponent(version, temp, filter, ok) || !ok)
           return true;
       }
     }

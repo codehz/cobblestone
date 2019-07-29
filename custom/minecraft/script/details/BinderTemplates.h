@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../ScriptBinderTemplate.h"
 #include "../../core/types.h"
+#include "../ScriptBinderTemplate.h"
+#include "../entt.h"
 
 #include <memory>
 
@@ -26,5 +27,14 @@ public:
   virtual std::string const &getTemplateIdentifier() const override;
   virtual void applyTemplate(ScriptObjectBinder &) const override;
 
-  static std::unique_ptr<ScriptObjectBinder> build(Block const&, BlockPos const&, ScriptApi::ScriptObjectHandle &&);
+  static std::unique_ptr<ScriptObjectBinder> build(Block const &, BlockPos const &, ScriptApi::ScriptObjectHandle &&);
+};
+
+class ScriptBinderPureEcsTemplate : public ScriptBinderTemplate {
+public:
+  virtual ~ScriptBinderPureEcsTemplate() override;
+  virtual std::string const &getTemplateIdentifier() const override;
+  virtual void applyTemplate(ScriptObjectBinder &) const override;
+
+  static std::unique_ptr<ScriptObjectBinder> build(entt::Registry<unsigned int> &, unsigned int);
 };

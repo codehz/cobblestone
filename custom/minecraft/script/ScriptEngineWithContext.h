@@ -53,7 +53,7 @@ public:
   bool helpGetItemStackFromPath(ItemInstance &, ScriptApi::ScriptObjectHandle const &) ABITAG(quickjs);
   bool helpApplyItemStackWithPath(ItemInstance const &, ScriptApi::ScriptObjectHandle const &) ABITAG(quickjs);
 
-  bool createEntity(ScriptApi::ScriptVersionInfo const &, ScriptApi::ScriptObjectHandle &);
+  bool createEntity(ScriptApi::ScriptVersionInfo const &, ScriptApi::ScriptObjectHandle &) PATCHABLE;
   bool createEntity(ScriptApi::ScriptVersionInfo const &, ScriptApi::ScriptObjectHandle &, std::string const &type, std::string const &identifier);
   bool destroyEntity(ScriptApi::ScriptVersionInfo const &, ScriptApi::ScriptObjectHandle const &);
   bool isValidEntity(ScriptApi::ScriptVersionInfo const &, ScriptApi::ScriptObjectHandle const &, bool &);

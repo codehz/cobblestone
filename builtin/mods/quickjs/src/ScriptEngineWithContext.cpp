@@ -275,3 +275,12 @@ bool ScriptEngineWithContext<ScriptServerContext>::helpApplyItemStackWithPath(It
   }
   return false;
 }
+
+bool ScriptEngineWithContext<ScriptServerContext>::createEntity(ScriptApi::ScriptVersionInfo const &version, ScriptApi::ScriptObjectHandle &target) {
+  auto id = getScriptServerContext().registry->create();
+  if (auto builder = ScriptBinderPureEcsTemplate::build(*getScriptServerContext().registry, id); builder) {
+    builder->serialize(*this, target);
+    return true;
+  }
+  return false;
+}
