@@ -67,8 +67,8 @@ bool ScriptLoreComponent::applyComponentTo(ScriptApi::ScriptVersionInfo const &v
   return true;
 }
 
-bool ScriptLoreComponent::hasComponent(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, ItemInstance &, bool &result) const {
-  result = true;
+bool ScriptLoreComponent::hasComponent(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, ItemInstance &item, bool &result) const {
+  result = !item.isNull();
   return true;
 }
 

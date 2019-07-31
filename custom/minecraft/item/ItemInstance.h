@@ -17,6 +17,7 @@ public:
   ItemInstance &operator=(ItemInstance const &);
 
   std::vector<std::string> getCustomLore() const;
+  bool isNull() const;
   void setCustomLore(std::vector<std::string> const &);
   inline ~ItemInstance() { asm("call _ZN12ItemInstanceD2Ev"); }
 };

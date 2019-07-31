@@ -13,6 +13,7 @@ public:
   ItemStack(ItemInstance const &);
   ItemStack &operator=(ItemStack const &);
   std::vector<std::string> getCustomLore() const;
+  bool isNull() const;
   void setCustomLore(std::vector<std::string> const &);
   operator bool(void) const;
   inline ~ItemStack() { asm("call _ZN9ItemStackD2Ev"); };
