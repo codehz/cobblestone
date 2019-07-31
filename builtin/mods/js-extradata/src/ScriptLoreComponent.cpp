@@ -67,7 +67,10 @@ bool ScriptLoreComponent::applyComponentTo(ScriptApi::ScriptVersionInfo const &v
   return true;
 }
 
-bool ScriptLoreComponent::hasComponent(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, ItemInstance &, bool &result) const { return true; }
+bool ScriptLoreComponent::hasComponent(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &, ItemInstance &, bool &result) const {
+  result = true;
+  return true;
+}
 
 bool ScriptLoreComponent::retrieveComponentFrom(ScriptApi::ScriptVersionInfo const &, ScriptEngine &, ScriptServerContext &ctx, ItemInstance &item, ScriptApi::ScriptObjectHandle &target) const {
   auto lores = item.getCustomLore();
