@@ -218,6 +218,12 @@ bool ScriptEngineWithContext<ScriptServerContext>::helpGetItemStackFromPath(Item
       result = ItemInstance{*slots[idx]};
       return true;
     }
+  } else if (type == "armor") {
+    auto slots = actor->getArmorContainer().getSlots();
+    if (idx >= 0 && idx < (int)slots.size()) {
+      result = ItemInstance{*slots[idx]};
+      return true;
+    }
   } else if (type == "hotbar" || type == "supply") {
     if (actor->hasCategory(ActorCategory::Player)) {
       auto slots = ((Player *)actor)->getSupplies().getSlots();
@@ -253,6 +259,12 @@ bool ScriptEngineWithContext<ScriptServerContext>::helpApplyItemStackWithPath(It
     }
     auto &container = actor->getHandContainer();
     if (idx >= 0 && idx < (int)container.getContainerSize()) {
+      container.setItem(idx, {item});
+      return true;
+    }
+  } else if (type == "armor") {
+    auto &container = actor->getArmorContainer();
+    if (idx >= 0 && idx < (int)container.getSlots().size()) {
       container.setItem(idx, {item});
       return true;
     }
