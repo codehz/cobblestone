@@ -9,7 +9,6 @@ class Player : public Mob {
 public:
   virtual ~Player() override;
 
-  MakeAccessor(getName, std::string, 7224);
   bool canUseAbility(AbilitiesIndex) const;
   PlayerInventoryProxy &getSupplies() const;
   ItemStack &getCarriedItem() const;

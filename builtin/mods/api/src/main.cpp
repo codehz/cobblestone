@@ -161,6 +161,6 @@ LAZY(register, {
 
 TClasslessInstanceHook(void, _ZN20ServerNetworkHandler19_displayGameMessageERK6PlayerRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE, Player const &player, std::string const &text) {
   auto &ins = Instance<RPC>();
-  ins.emit("chat.recv", json::object({{"sender", player.getName()}, {"content", text}}));
+  ins.emit("chat.recv", json::object({{"sender", player.getNameTag()}, {"content", text}}));
   original(this, player, text);
 }

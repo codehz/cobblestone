@@ -22,6 +22,7 @@ class Actor {
 public:
   MakeAccessor(getActorDefinitionDescriptor, std::unique_ptr<ActorDefinitionDescriptor>, 192);
   MakeAccessor(getBlockSource, std::unique_ptr<BlockSource>, 5952);
+  std::string const &getNameTag() const;
   bool hasTickingArea() const;
   bool hasCategory(ActorCategory) const;
   EntityContext &getEntity();
