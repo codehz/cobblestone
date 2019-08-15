@@ -21,4 +21,6 @@ public:
 class ServerPlayer : public Player {
 public:
   void sendNetworkPacket(Packet &) const;
+  void disconnect(void);
+  void sendInventory(bool);
 };
