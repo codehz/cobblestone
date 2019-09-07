@@ -149,7 +149,7 @@ LAZY(register, {
     return false;
   });
 
-  modloader_log_hook(+[](modloader_log_level level, const char *tag, const char *content) { Instance<RPC>().emit("core", json::object({{"level", (int)level}, {"tag", tag}, {"content", content}})); });
+  modloader_log_hook(+[](modloader_log_level level, const char *tag, const char *content) { Instance<RPC>().emit("core.log", json::object({{"level", (int)level}, {"tag", tag}, {"content", content}})); });
 
   std::thread rthread{[] {
     pthread_setname_np(pthread_self(), "APIs");
