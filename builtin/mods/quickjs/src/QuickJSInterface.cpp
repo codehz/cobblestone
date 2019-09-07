@@ -24,8 +24,6 @@ bool QuickJSInterface::initialize(ScriptReport &) {
   // * Preload hooks
   for (auto &preload : quickjs_preloads)
     preload(global);
-  // * globalThis
-  JS_SetPropertyStr(js_context, global, "globalThis", global);
   // * console
   autoval obj = JS_NewObject(js_context);
   JS_SetPropertyStr(js_context, obj, "log", JS_NewCFunction(js_context, QuickJSInterface::processLog, "log", 0));
