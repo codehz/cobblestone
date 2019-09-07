@@ -1,3 +1,43 @@
+2019-09-01:
+
+- added globalThis
+- documented JS_EVAL_FLAG_COMPILE_ONLY
+- added import.meta.url and import.meta.main
+- added 'debugger' statement
+- misc bug fixes
+
+2019-08-18:
+
+- added os.realpath, os.getcwd, os.mkdir, os.stat, os.lstat,
+  os.readlink, os.readdir, os.utimes, std.popen
+- module autodetection
+- added import.meta
+- misc bug fixes
+
+2019-08-10:
+
+- added public class fields and private class fields, methods and
+  accessors (TC39 proposal)
+- changed JS_ToCStringLen() prototype
+- qjsc: handle '-' in module names and modules with the same filename
+- added std.urlGet
+- exported JS_GetOwnPropertyNames() and JS_GetOwnProperty()
+- exported some bigint C functions
+- added support for eshost in run-test262
+- misc bug fixes
+
+2019-07-28:
+
+- added dynamic import
+- added Promise.allSettled
+- added String.prototype.matchAll
+- added Object.fromEntries
+- reduced number of ticks in await
+- added BigInt support in Atomics
+- exported JS_NewPromiseCapability()
+- misc async function and async generator fixes
+- enabled hashbang support by default
+
 2019-07-21:
 
 - updated test262 tests

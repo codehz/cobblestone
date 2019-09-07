@@ -176,9 +176,9 @@ inline namespace nbt ABITAG(js_nbt) {
     if (!JS_IsString(val))
       return JS_ThrowTypeError(js_context, "Tag type mismatch");
     if (auto ptr = reinterpret_cast<StringTag *>(JS_GetOpaque(this_val, String)); ptr) {
-      int len;
-      auto data = JS_ToCStringLen(js_context, &len, val, false);
-      ptr->value = {data, (size_t)len};
+      size_t len;
+      auto data = JS_ToCStringLen(js_context, &len, val);
+      ptr->value = {data, len};
       return JS_UNDEFINED;
     }
     return JS_ThrowTypeError(ctx, "Cannot get internal slot");

@@ -1,7 +1,8 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Created by GNU Texinfo 5.2, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
 <head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>QuickJS Javascript Engine</title>
 
 <meta name="description" content="QuickJS Javascript Engine">
@@ -9,21 +10,20 @@
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link href="#SEC_Contents" rel="contents" title="Table of Contents">
 <style type="text/css">
 <!--
 a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
 blockquote.smallquotation {font-size: smaller}
 div.display {margin-left: 3.2em}
 div.example {margin-left: 3.2em}
-div.indentedblock {margin-left: 3.2em}
 div.lisp {margin-left: 3.2em}
 div.smalldisplay {margin-left: 3.2em}
 div.smallexample {margin-left: 3.2em}
-div.smallindentedblock {margin-left: 3.2em; font-size: smaller}
 div.smalllisp {margin-left: 3.2em}
-kbd {font-style:oblique}
+kbd {font-style: oblique}
 pre.display {font-family: inherit}
 pre.format {font-family: inherit}
 pre.menu-comment {font-family: serif}
@@ -32,10 +32,9 @@ pre.smalldisplay {font-family: inherit; font-size: smaller}
 pre.smallexample {font-size: smaller}
 pre.smallformat {font-family: inherit; font-size: smaller}
 pre.smalllisp {font-size: smaller}
-span.nocodebreak {white-space:nowrap}
-span.nolinebreak {white-space:nowrap}
-span.roman {font-family:serif; font-weight:normal}
-span.sansserif {font-family:sans-serif; font-weight:normal}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
 ul.no-bullet {list-style: none}
 -->
 </style>
@@ -44,7 +43,7 @@ ul.no-bullet {list-style: none}
 
 </head>
 
-<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+<body lang="en">
 <h1 class="settitle" align="center">QuickJS Javascript Engine</h1>
 
 <a name="SEC_Contents"></a>
@@ -131,8 +130,9 @@ ul.no-bullet {list-style: none}
 <h2 class="chapter">1 Introduction</h2>
 
 <p>QuickJS is a small and embeddable Javascript engine. It supports the
-ES2019 specification including modules, asynchronous
-generators and proxies.
+ES2019 specification
+<a name="DOCF1" href="#FOOT1"><sup>1</sup></a>
+including modules, asynchronous generators and proxies.
 </p>
 <p>It optionally supports mathematical extensions such as big integers
 (BigInt), big floating point numbers (BigFloat) and operator
@@ -144,12 +144,14 @@ overloading.
 <ul>
 <li> Small and easily embeddable: just a few C files, no external dependency, 180 KiB of x86 code for a simple &ldquo;hello world&rdquo; program.
 
-</li><li> Fast interpreter with very low startup time: runs the 56000 tests of the ECMAScript Test Suite<a name="DOCF1" href="#FOOT1"><sup>1</sup></a> in about 100 seconds on a single core of a desktop PC. The complete life cycle of a runtime instance completes in less than 300 microseconds.
+</li><li> Fast interpreter with very low startup time: runs the 69000 tests of the ECMAScript Test Suite<a name="DOCF2" href="#FOOT2"><sup>2</sup></a> in about 95 seconds on a single core of a desktop PC. The complete life cycle of a runtime instance completes in less than 300 microseconds.
 
 </li><li> Almost complete ES2019 support including modules, asynchronous
-generators and full Annex B support (legacy web compatibility).
+generators and full Annex B support (legacy web compatibility). Many
+features from the upcoming ES2020 specification
+<a name="DOCF3" href="#FOOT3"><sup>3</sup></a> are also supported.
 
-</li><li> Passes nearly 100% of the ECMAScript Test Suite tests.
+</li><li> Passes nearly 100% of the ECMAScript Test Suite tests when selecting the ES2019 features.
 
 </li><li> Can compile Javascript sources to executables with no external dependency.
 
@@ -241,7 +243,11 @@ compiler with the mathematical extensions:
 </dd>
 <dt><code>-m</code></dt>
 <dt><code>--module</code></dt>
-<dd><p>Load as ES6 module (default if .mjs file extension).
+<dd><p>Load as ES6 module (default=autodetect).
+</p>
+</dd>
+<dt><code>--script</code></dt>
+<dd><p>Load as ES6 script (default=autodetect).
 </p>
 </dd>
 </dl>
@@ -284,7 +290,7 @@ executable file.
 </p>
 </dd>
 <dt><code>-m</code></dt>
-<dd><p>Compile as Javascript module (default if <samp>.mjs</samp> extension).
+<dd><p>Compile as Javascript module (default=autodetect).
 </p>
 </dd>
 <dt><code>-M module_name[,cname]</code></dt>
@@ -338,7 +344,6 @@ QuickJS source code directory.
 <div class="example">
 <pre class="example">git clone https://github.com/tc39/test262.git test262
 cd test262
-git checkout 51d1abadce1de0b38594b7c9972ee60762f35dd0
 patch -p1 &lt; ../tests/test262.patch
 cd ..
 </pre></div>
@@ -353,9 +358,35 @@ slow string initialization function is optimized).
 <pre class="example">make test2
 </pre></div>
 
-<p>For more information, run <code>./run-test262</code> to see the options of
-the test262 runner. The configuration files <code>test262.conf</code> and
-<code>test262bn.conf</code> contain the options to run the various tests.
+<p>The configuration files <code>test262.conf</code> (resp
+<code>test262bn.conf</code> for the bignum version, <code>test262o.conf</code> for
+the old ES5.1 tests<a name="DOCF4" href="#FOOT4"><sup>4</sup></a>)) contain the options
+to run the various tests. Tests can be excluded based on features or
+filename.
+</p>
+<p>The file <code>test262_errors.txt</code> contains the current list of
+errors. The runner displays a message when a new error appears or when
+an existing error is corrected or modified. Use the <code>-u</code> option
+to update the current list of errors (or <code>make test2-update</code>).
+</p>
+<p>The file <code>test262_report.txt</code> contains the logs of all the
+tests. It is useful to have a clearer analysis of a particular
+error. In case of crash, the last line corresponds to the failing
+test.
+</p>
+<p>Use the syntax <code>./run-test262 -c test262.conf -f filename.js</code> to
+run a single test. Use the syntax <code>./run-test262 -c test262.conf
+N</code> to start testing at test number <code>N</code>.
+</p>
+<p>For more information, run <code>./run-test262</code> to see the command line
+options of the test262 runner.
+</p>
+<p><code>run-test262</code> accepts the <code>-N</code> option to be invoked from
+<code>test262-harness</code><a name="DOCF5" href="#FOOT5"><sup>5</sup></a>
+thru <code>eshost</code>. Unless you want to compare QuickJS with other
+engines under the same conditions, we do not recommend to run the
+tests this way as it is much slower (typically half an hour instead of
+about 100 seconds).
 </p>
 <a name="Specifications"></a>
 <h2 class="chapter">3 Specifications</h2>
@@ -366,16 +397,15 @@ the test262 runner. The configuration files <code>test262.conf</code> and
 <a name="ES2019-support"></a>
 <h4 class="subsection">3.1.1 ES2019 support</h4>
 
-<p>The ES2019 specification
-<a name="DOCF2" href="#FOOT2"><sup>2</sup></a> is almost fully
-supported including the Annex B (legacy web compatibility) and the
-Unicode related features. The following features are not supported
-yet:
+<p>The ES2019 specification is almost fully supported including the Annex
+B (legacy web compatibility) and the Unicode related features.
+</p>
+<p>The following features are not supported yet:
 </p>
 <ul>
 <li> Realms (althougth the C API supports different runtimes and contexts)
 
-</li><li> Tail calls<a name="DOCF3" href="#FOOT3"><sup>3</sup></a>
+</li><li> Tail calls<a name="DOCF6" href="#FOOT6"><sup>6</sup></a>
 
 </li></ul>
 
@@ -513,6 +543,11 @@ and <samp>stdio.h</samp> and a few other utilities.
 <code>std.Error</code> in case of I/O error.
 </p>
 </dd>
+<dt><code>popen(command, flags)</code></dt>
+<dd><p>Open a process by creating a pipe (wrapper to the libc <code>popen()</code>). Throws 
+<code>std.Error</code> in case of I/O error.
+</p>
+</dd>
 <dt><code>tmpfile()</code></dt>
 <dd><p>Open a temporary file. Throws <code>std.Error</code> in case of I/O error.
 </p>
@@ -541,10 +576,6 @@ and <samp>stdio.h</samp> and a few other utilities.
 <dd><p>Constants for seek().
 </p>
 </dd>
-<dt><code>global</code></dt>
-<dd><p>Reference to the global object.
-</p>
-</dd>
 <dt><code>gc()</code></dt>
 <dd><p>Manually invoke the cycle removal algorithm. The cycle removal
 algorithm is automatically started when needed, so this function is
@@ -555,6 +586,31 @@ useful in case of specific memory constraints or for testing.
 <dd><p>Return the value of the environment variable <code>name</code> or
 <code>undefined</code> if it is not defined.
 </p>
+</dd>
+<dt><code>urlGet(url, options = undefined)</code></dt>
+<dd>
+<p>Download <code>url</code> using the <samp>curl</samp> command line
+utility. <code>options</code> is an optional object containing the following
+optional properties:
+</p>
+<dl compact="compact">
+<dt><code>binary</code></dt>
+<dd><p>Boolean (default = false). If true, the response is an ArrayBuffer
+  instead of a string. When a string is returned, the data is assumed
+  to be UTF-8 encoded.
+</p>
+</dd>
+<dt><code>full</code></dt>
+<dd><p>Boolean (default = false). If true, return the an object contains
+  the properties <code>response</code> (response content),
+  <code>responseHeaders</code> (headers separated by CRLF), <code>status</code>
+  (status code). If <code>full</code> is false, only the response is
+  returned if the status is between 200 and 299. Otherwise an
+  <code>std.Error</code> exception is raised.
+</p>
+</dd>
+</dl>
+
 </dd>
 </dl>
 
@@ -685,6 +741,67 @@ Return the number of written bytes or &lt; 0 if error.
 </dd>
 <dt><code>rename(oldname, newname)</code></dt>
 <dd><p>Rename a file. Return 0 if OK or &lt; 0 if error.
+</p>
+</dd>
+<dt><code>realpath(path)</code></dt>
+<dd><p>Return <code>[str, err]</code> where <code>str</code> is the canonicalized absolute
+pathname of <code>path</code> and <code>err</code> the error code.
+</p>
+</dd>
+<dt><code>getcwd()</code></dt>
+<dd><p>Return <code>[str, err]</code> where <code>str</code> is the current working directory
+and <code>err</code> the error code.
+</p>
+</dd>
+<dt><code>mkdir(path, mode = 0o777)</code></dt>
+<dd><p>Create a directory at <code>path</code>. Return the error code.
+</p>
+</dd>
+<dt><code>stat(path)</code></dt>
+<dt><code>lstat(path)</code></dt>
+<dd>
+<p>Return <code>[obj, err]</code> where <code>obj</code> is an object containing the
+file status of <code>path</code>. <code>err</code> is the error code. The
+following fields are defined in <code>obj</code>: dev, ino, mode, nlink,
+uid, gid, rdev, size, blocks, atime, mtime, ctime. The times are
+specified in milliseconds since 1970. <code>lstat()</code> is the same as
+<code>stat()</code> excepts that it returns information about the link
+itself.
+</p>
+</dd>
+<dt><code>S_IFMT</code></dt>
+<dt><code>S_IFIFO</code></dt>
+<dt><code>S_IFCHR</code></dt>
+<dt><code>S_IFDIR</code></dt>
+<dt><code>S_IFBLK</code></dt>
+<dt><code>S_IFREG</code></dt>
+<dt><code>S_IFSOCK</code></dt>
+<dt><code>S_IFLNK</code></dt>
+<dt><code>S_ISGID</code></dt>
+<dt><code>S_ISUID</code></dt>
+<dd><p>Constants to interpret the <code>mode</code> property returned by
+<code>stat()</code>. They have the same value as in the C system header
+<samp>sys/stat.h</samp>.
+</p>
+</dd>
+<dt><code>utimes(path, atime, mtime)</code></dt>
+<dd><p>Change the access and modification times of the file <code>path</code>. The
+times are specified in milliseconds since 1970.
+</p>
+</dd>
+<dt><code>symlink(target, linkpath)</code></dt>
+<dd><p>Create a link at <code>linkpath</code> containing the string <code>target</code>.
+</p>
+</dd>
+<dt><code>readlink(path)</code></dt>
+<dd><p>Return <code>[str, err]</code> where <code>str</code> is the link target and <code>err</code>
+the error code.
+</p>
+</dd>
+<dt><code>readdir(path)</code></dt>
+<dd><p>Return <code>[array, err]</code> where <code>array</code> is an array of strings
+containing the filenames of the directory <code>path</code>. <code>err</code> is
+the error code.
 </p>
 </dd>
 <dt><code>setReadHandler(fd, func)</code></dt>
@@ -986,7 +1103,7 @@ stack holds the Javascript parameters and local variables.
 <h3 class="section">4.4 RegExp</h3>
 
 <p>A specific regular expression engine was developped. It is both small
-and efficient and supports all the ES2019 features including the
+and efficient and supports all the ES2020 features including the
 Unicode properties. As the Javascript compiler, it directly generates
 bytecode without a parse tree.
 </p>
@@ -1018,7 +1135,7 @@ binary properties.
 <h3 class="section">4.6 BigInt and BigFloat</h3>
 
 <p>BigInt and BigFloat are implemented with the <code>libbf</code>
-library<a name="DOCF4" href="#FOOT4"><sup>4</sup></a>. It weights about 60
+library<a name="DOCF7" href="#FOOT7"><sup>7</sup></a>. It weights about 60
 KiB (x86 code) and provides arbitrary precision IEEE 754 floating
 point operations and transcendental functions with exact rounding.
 </p>
@@ -1035,12 +1152,20 @@ Bellard and Charlie Gordon.
 <h4 class="footnotes-heading">Footnotes</h4>
 
 <h3><a name="FOOT1" href="#DOCF1">(1)</a></h3>
-<p><a href="https://github.com/tc39/test262">https://github.com/tc39/test262</a></p>
+<p><a href="https://www.ecma-international.org/ecma-262/10.0">https://www.ecma-international.org/ecma-262/10.0</a></p>
 <h3><a name="FOOT2" href="#DOCF2">(2)</a></h3>
-<p><a href="https://tc39.github.io/ecma262/">https://tc39.github.io/ecma262/</a></p>
+<p><a href="https://github.com/tc39/test262">https://github.com/tc39/test262</a></p>
 <h3><a name="FOOT3" href="#DOCF3">(3)</a></h3>
-<p>We believe the current specification of tails calls is too complicated and presents limited practical interests.</p>
+<p><a href="https://tc39.github.io/ecma262/">https://tc39.github.io/ecma262/</a></p>
 <h3><a name="FOOT4" href="#DOCF4">(4)</a></h3>
+<p>The old ES5.1 tests can be extracted with
+<code>git clone --single-branch --branch es5-tests
+https://github.com/tc39/test262.git test262o</code></p>
+<h3><a name="FOOT5" href="#DOCF5">(5)</a></h3>
+<p><a href="https://github.com/bterlson/test262-harness">https://github.com/bterlson/test262-harness</a></p>
+<h3><a name="FOOT6" href="#DOCF6">(6)</a></h3>
+<p>We believe the current specification of tails calls is too complicated and presents limited practical interests.</p>
+<h3><a name="FOOT7" href="#DOCF7">(7)</a></h3>
 <p><a href="https://bellard.org/libbf">https://bellard.org/libbf</a></p>
 </div>
 <hr>

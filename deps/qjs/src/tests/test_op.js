@@ -201,8 +201,9 @@ function test_op2()
     assert((delete a.x), true, "delete");
     assert(("x" in a), false, "delete");
 
-    a = {x: 1, if: 2};
+    a = {x: 1, if: 2, async: 3};
     assert(a.if === 2);
+    assert(a.async === 3);
 }
 
 function test_prototype()
@@ -291,6 +292,26 @@ function test_template()
     assert(a === "abc123d");
 }
 
+function test_object_literal()
+{
+    var x = 0, get = 1, set = 2; async = 3;
+    a = { get: 2, set: 3, async: 4 };
+    assert(JSON.stringify(a), '{"get":2,"set":3,"async":4}');
+
+    a = { x, get, set, async };
+    assert(JSON.stringify(a), '{"x":0,"get":1,"set":2,"async":3}');
+}
+
+function test_regexp_skip()
+{
+    var a, b;
+    [a, b = /abc\(/] = [1];
+    assert(a === 1);
+    
+    [a, b =/abc\(/] = [2];
+    assert(a === 2);
+}
+
 test_op1();
 test_cvt();
 test_eq();
@@ -300,3 +321,6 @@ test_prototype();
 test_arguments();
 test_class();
 test_template();
+test_object_literal();
+test_regexp_skip();
+

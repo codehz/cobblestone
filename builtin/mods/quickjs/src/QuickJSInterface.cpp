@@ -143,10 +143,10 @@ bool QuickJSInterface::getValue(ScriptObjectHandle const &src, double &result, S
   return ret == 0;
 }
 bool QuickJSInterface::getValue(ScriptObjectHandle const &src, std::string &result, ScriptReport &report) {
-  int len = 0;
-  autostr ret = JS_ToCStringLen(js_context, &len, src, false);
+  size_t len = 0;
+  autostr ret = JS_ToCStringLen(js_context, &len, src);
   if (ret) {
-    result = {ret, (size_t)len};
+    result = {ret, len};
   } else {
     report.addError("Target value is not string");
   }
@@ -206,9 +206,9 @@ bool QuickJSInterface::getMemberNames(ScriptObjectHandle const &src, std::vector
   for (int32_t i = 0; i < JS_VALUE_GET_INT(propLen); i++) {
     autoval key = JS_GetPropertyUint32(js_context, arr, i);
     if (JS_IsString(key)) {
-      int keyLen = 0;
-      autostr keyStr = JS_ToCStringLen(js_context, &keyLen, key, false);
-      result.emplace_back(keyStr, (size_t)keyLen);
+      size_t keyLen = 0;
+      autostr keyStr = JS_ToCStringLen(js_context, &keyLen, key);
+      result.emplace_back(keyStr, keyLen);
     }
   }
   HANDLE_EXCEPTION();

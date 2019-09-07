@@ -178,9 +178,9 @@ bool ScriptEngine::deserializeScriptObjectHandleToJson(ScriptApi::ScriptObjectHa
     break;
   }
   case ScriptApi::ScriptObjectType::T_STRING: {
-    int len;
-    autostr str = JS_ToCStringLen(js_context, &len, handle, false);
-    json = Json::Value(std::string{str, (size_t)len});
+    size_t len;
+    autostr str = JS_ToCStringLen(js_context, &len, handle);
+    json = Json::Value(std::string{str, len});
     break;
   }
   case ScriptApi::ScriptObjectType::T_OBJECT: {
@@ -195,8 +195,8 @@ bool ScriptEngine::deserializeScriptObjectHandleToJson(ScriptApi::ScriptObjectHa
       Json::Value temp;
       autoval key = JS_GetPropertyUint32(js_context, arr, i);
       if (JS_IsString(key)) {
-        int keyLen = 0;
-        autostr keyStr = JS_ToCStringLen(js_context, &keyLen, key, false);
+        size_t keyLen = 0;
+        autostr keyStr = JS_ToCStringLen(js_context, &keyLen, key);
         autoval value = JS_GetPropertyStr(js_context, handle, keyStr);
         Json::Value val_temp;
         deserializeScriptObjectHandleToJson(value, val_temp);

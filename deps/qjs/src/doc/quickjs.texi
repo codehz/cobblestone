@@ -20,8 +20,9 @@
 @chapter Introduction
 
 QuickJS is a small and embeddable Javascript engine. It supports the
-ES2019 specification including modules, asynchronous
-generators and proxies.
+ES2019 specification
+@footnote{@url{https://www.ecma-international.org/ecma-262/10.0}}
+including modules, asynchronous generators and proxies.
 
 It optionally supports mathematical extensions such as big integers
 (BigInt), big floating point numbers (BigFloat) and operator
@@ -33,12 +34,14 @@ overloading.
 
 @item Small and easily embeddable: just a few C files, no external dependency, 180 KiB of x86 code for a simple ``hello world'' program.
 
-@item Fast interpreter with very low startup time: runs the 56000 tests of the ECMAScript Test Suite@footnote{@url{https://github.com/tc39/test262}} in about 100 seconds on a single core of a desktop PC. The complete life cycle of a runtime instance completes in less than 300 microseconds.
+@item Fast interpreter with very low startup time: runs the 69000 tests of the ECMAScript Test Suite@footnote{@url{https://github.com/tc39/test262}} in about 95 seconds on a single core of a desktop PC. The complete life cycle of a runtime instance completes in less than 300 microseconds.
 
 @item Almost complete ES2019 support including modules, asynchronous
-generators and full Annex B support (legacy web compatibility).
+generators and full Annex B support (legacy web compatibility). Many
+features from the upcoming ES2020 specification
+@footnote{@url{https://tc39.github.io/ecma262/}} are also supported.
 
-@item Passes nearly 100% of the ECMAScript Test Suite tests.
+@item Passes nearly 100% of the ECMAScript Test Suite tests when selecting the ES2019 features.
 
 @item Can compile Javascript sources to executables with no external dependency.
 
@@ -124,7 +127,10 @@ Go to interactive mode (it is not the default when files are provided on the com
 
 @item -m
 @item --module
-Load as ES6 module (default if .mjs file extension).
+Load as ES6 module (default=autodetect).
+
+@item --script
+Load as ES6 script (default=autodetect).
 
 @end table
 
@@ -161,7 +167,7 @@ Set the output filename (default = @file{out.c} or @file{a.out}).
 Set the C name of the generated data.
 
 @item -m
-Compile as Javascript module (default if @file{.mjs} extension).
+Compile as Javascript module (default=autodetect).
 
 @item -M module_name[,cname]
 Add initialization code for an external C module. See the
@@ -207,7 +213,6 @@ Alternatively, the test262 tests can be installed with:
 @example
 git clone https://github.com/tc39/test262.git test262
 cd test262
-git checkout 51d1abadce1de0b38594b7c9972ee60762f35dd0
 patch -p1 < ../tests/test262.patch
 cd ..
 @end example
@@ -222,9 +227,37 @@ The tests can be run with
 make test2
 @end example
 
-For more information, run @code{./run-test262} to see the options of
-the test262 runner. The configuration files @code{test262.conf} and
-@code{test262bn.conf} contain the options to run the various tests.
+The configuration files @code{test262.conf} (resp
+@code{test262bn.conf} for the bignum version, @code{test262o.conf} for
+the old ES5.1 tests@footnote{The old ES5.1 tests can be extracted with
+@code{git clone --single-branch --branch es5-tests
+https://github.com/tc39/test262.git test262o}})) contain the options
+to run the various tests. Tests can be excluded based on features or
+filename.
+
+The file @code{test262_errors.txt} contains the current list of
+errors. The runner displays a message when a new error appears or when
+an existing error is corrected or modified. Use the @code{-u} option
+to update the current list of errors (or @code{make test2-update}).
+
+The file @code{test262_report.txt} contains the logs of all the
+tests. It is useful to have a clearer analysis of a particular
+error. In case of crash, the last line corresponds to the failing
+test.
+
+Use the syntax @code{./run-test262 -c test262.conf -f filename.js} to
+run a single test. Use the syntax @code{./run-test262 -c test262.conf
+N} to start testing at test number @code{N}.
+
+For more information, run @code{./run-test262} to see the command line
+options of the test262 runner.
+
+@code{run-test262} accepts the @code{-N} option to be invoked from
+@code{test262-harness}@footnote{@url{https://github.com/bterlson/test262-harness}}
+thru @code{eshost}. Unless you want to compare QuickJS with other
+engines under the same conditions, we do not recommend to run the
+tests this way as it is much slower (typically half an hour instead of
+about 100 seconds).
 
 @chapter Specifications
 
@@ -232,11 +265,10 @@ the test262 runner. The configuration files @code{test262.conf} and
 
 @subsection ES2019 support
 
-The ES2019 specification
-@footnote{@url{https://tc39.github.io/ecma262/}} is almost fully
-supported including the Annex B (legacy web compatibility) and the
-Unicode related features. The following features are not supported
-yet:
+The ES2019 specification is almost fully supported including the Annex
+B (legacy web compatibility) and the Unicode related features.
+
+The following features are not supported yet:
 
 @itemize
 
@@ -366,6 +398,10 @@ The constructor contains the following fields:
 Open a file (wrapper to the libc @code{fopen()}). Throws 
 @code{std.Error} in case of I/O error.
 
+@item popen(command, flags)
+Open a process by creating a pipe (wrapper to the libc @code{popen()}). Throws 
+@code{std.Error} in case of I/O error.
+
 @item tmpfile()
 Open a temporary file. Throws @code{std.Error} in case of I/O error.
 
@@ -388,9 +424,6 @@ Wrappers to the libc file @code{stdin}, @code{stdout}, @code{stderr}.
 @item SEEK_END
 Constants for seek().
 
-@item global
-Reference to the global object.
-
 @item gc()
 Manually invoke the cycle removal algorithm. The cycle removal
 algorithm is automatically started when needed, so this function is
@@ -399,6 +432,28 @@ useful in case of specific memory constraints or for testing.
 @item getenv(name)
 Return the value of the environment variable @code{name} or
 @code{undefined} if it is not defined.
+
+@item urlGet(url, options = undefined)
+
+Download @code{url} using the @file{curl} command line
+utility. @code{options} is an optional object containing the following
+optional properties:
+
+  @table @code
+  @item binary
+  Boolean (default = false). If true, the response is an ArrayBuffer
+  instead of a string. When a string is returned, the data is assumed
+  to be UTF-8 encoded.
+
+  @item full
+  Boolean (default = false). If true, return the an object contains
+  the properties @code{response} (response content),
+  @code{responseHeaders} (headers separated by CRLF), @code{status}
+  (status code). If @code{full} is false, only the response is
+  returned if the status is between 200 and 299. Otherwise an
+  @code{std.Error} exception is raised.
+
+  @end table
 
 @end table
 
@@ -504,6 +559,58 @@ Remove a file. Return 0 if OK or < 0 if error.
 
 @item rename(oldname, newname)
 Rename a file. Return 0 if OK or < 0 if error.
+
+@item realpath(path)
+Return @code{[str, err]} where @code{str} is the canonicalized absolute
+pathname of @code{path} and @code{err} the error code.
+
+@item getcwd()
+Return @code{[str, err]} where @code{str} is the current working directory
+and @code{err} the error code.
+
+@item mkdir(path, mode = 0o777)
+Create a directory at @code{path}. Return the error code.
+
+@item stat(path)
+@item lstat(path)
+
+Return @code{[obj, err]} where @code{obj} is an object containing the
+file status of @code{path}. @code{err} is the error code. The
+following fields are defined in @code{obj}: dev, ino, mode, nlink,
+uid, gid, rdev, size, blocks, atime, mtime, ctime. The times are
+specified in milliseconds since 1970. @code{lstat()} is the same as
+@code{stat()} excepts that it returns information about the link
+itself.
+
+@item S_IFMT
+@item S_IFIFO
+@item S_IFCHR
+@item S_IFDIR
+@item S_IFBLK
+@item S_IFREG
+@item S_IFSOCK
+@item S_IFLNK
+@item S_ISGID
+@item S_ISUID
+Constants to interpret the @code{mode} property returned by
+@code{stat()}. They have the same value as in the C system header
+@file{sys/stat.h}.
+
+@item utimes(path, atime, mtime)
+Change the access and modification times of the file @code{path}. The
+times are specified in milliseconds since 1970.
+
+@item symlink(target, linkpath)
+Create a link at @code{linkpath} containing the string @code{target}.
+
+@item readlink(path)
+Return @code{[str, err]} where @code{str} is the link target and @code{err}
+the error code.
+
+@item readdir(path)
+Return @code{[array, err]} where @code{array} is an array of strings
+containing the filenames of the directory @code{path}. @code{err} is
+the error code.
 
 @item setReadHandler(fd, func)
 Add a read handler to the file handle @code{fd}. @code{func} is called
@@ -773,7 +880,7 @@ stack holds the Javascript parameters and local variables.
 @section RegExp
 
 A specific regular expression engine was developped. It is both small
-and efficient and supports all the ES2019 features including the
+and efficient and supports all the ES2020 features including the
 Unicode properties. As the Javascript compiler, it directly generates
 bytecode without a parse tree.
 

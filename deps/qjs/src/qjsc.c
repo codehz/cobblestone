@@ -118,11 +118,10 @@ namelist_entry_t *namelist_find(namelist_t *lp, const char *name)
     return NULL;
 }
 
-
-static void get_c_name(char *buf, int buf_size, const char *file)
+static void get_c_name(char *buf, size_t buf_size, const char *file)
 {
     const char *p, *r;
-    size_t len;
+    size_t len, i;
     
     p = strrchr(file, '/');
     if (!p)
@@ -136,7 +135,12 @@ static void get_c_name(char *buf, int buf_size, const char *file)
     if (len > buf_size - 1)
         len = buf_size - 1;
     memcpy(buf, p, len);
+    for(i = 0; i < len; i++) {
+        if (buf[i] == '-')
+            buf[i] = '_';
+    }
     buf[len] = '\0';
+    /* Note: could also try to avoid using C keywords */
 }
 
 static void dump_hex(FILE *f, const uint8_t *buf, size_t len)
@@ -188,6 +192,28 @@ static int js_module_dummy_init(JSContext *ctx, JSModuleDef *m)
     abort();
 }
 
+static void find_unique_cname(char *cname, size_t cname_size)
+{
+    char cname1[1024];
+    int suffix_num;
+    size_t len, max_len;
+    assert(cname_size >= 32);
+    /* find a C name not matching an existing module C name by
+       adding a numeric suffix */
+    len = strlen(cname);
+    max_len = cname_size - 16;
+    if (len > max_len)
+        cname[max_len] = '\0';
+    suffix_num = 1;
+    for(;;) {
+        snprintf(cname1, sizeof(cname1), "%s_%d", cname, suffix_num);
+        if (!namelist_find(&cname_list, cname1))
+            break;
+        suffix_num++;
+    }
+    pstrcpy(cname, cname_size, cname1);
+}
+
 JSModuleDef *jsc_module_loader(JSContext *ctx,
                               const char *module_name, void *opaque)
 {
@@ -225,6 +251,9 @@ JSModuleDef *jsc_module_loader(JSContext *ctx,
         if (JS_IsException(func_val))
             return NULL;
         get_c_name(cname, sizeof(cname), module_name);
+        if (namelist_find(&cname_list, cname)) {
+            find_unique_cname(cname, sizeof(cname));
+        }
         output_object_code(ctx, outfile, func_val, cname, TRUE);
         
         /* the module is already referenced, so we must free it */
@@ -237,7 +266,7 @@ JSModuleDef *jsc_module_loader(JSContext *ctx,
 static void compile_file(JSContext *ctx, FILE *fo,
                          const char *filename,
                          const char *c_name1,
-                         BOOL is_module)
+                         int module)
 {
     uint8_t *buf;
     char c_name[1024];
@@ -250,12 +279,16 @@ static void compile_file(JSContext *ctx, FILE *fo,
         fprintf(stderr, "Could not load '%s'\n", filename);
         exit(1);
     }
-    eval_flags = JS_EVAL_FLAG_SHEBANG | JS_EVAL_FLAG_COMPILE_ONLY;
-    if (is_module)
+    eval_flags = JS_EVAL_FLAG_COMPILE_ONLY;
+    if (module < 0) {
+        module = (has_suffix(filename, ".mjs") ||
+                  JS_DetectModule((const char *)buf, buf_len));
+    }
+    if (module)
         eval_flags |= JS_EVAL_TYPE_MODULE;
     else
         eval_flags |= JS_EVAL_TYPE_GLOBAL;
-    obj = JS_Eval(ctx, (char *)buf, buf_len, filename, eval_flags);
+    obj = JS_Eval(ctx, (const char *)buf, buf_len, filename, eval_flags);
     if (JS_IsException(obj)) {
         js_std_dump_error(ctx);
         exit(1);
@@ -301,7 +334,7 @@ void help(void)
            "-e          output main() and bytecode in a C file (default = executable output)\n"
            "-o output   set the output filename\n"
            "-N cname    set the C name of the generated data\n"
-           "-m          compile as Javascript module\n"
+           "-m          compile as Javascript module (default=autodetect)\n"
            "-M module_name[,cname] add initialization code for an external C module\n"
            "-x          byte swapped output\n"
            );
@@ -438,14 +471,15 @@ int main(int argc, char **argv)
     FILE *fo;
     JSRuntime *rt;
     JSContext *ctx;
-    BOOL module, use_lto;
+    BOOL use_lto;
+    int module;
     OutputTypeEnum output_type;
     
     out_filename = NULL;
     output_type = OUTPUT_EXECUTABLE;
     cname = NULL;
     feature_bitmap = FE_ALL;
-    module = FALSE;
+    module = -1;
     byte_swap = FALSE;
     verbose = 0;
     use_lto = FALSE;
@@ -497,7 +531,7 @@ int main(int argc, char **argv)
             }
             break;
         case 'm':
-            module = TRUE;
+            module = 1;
             break;
         case 'M':
             {
@@ -579,8 +613,7 @@ int main(int argc, char **argv)
 
     for(i = optind; i < argc; i++) {
         const char *filename = argv[i];
-        BOOL module1 = module || has_suffix(filename, ".mjs");
-        compile_file(ctx, fo, filename, cname, module1);
+        compile_file(ctx, fo, filename, cname, module);
         cname = NULL;
     }
 
@@ -616,7 +649,7 @@ int main(int argc, char **argv)
             namelist_entry_t *e = &cname_list.array[i];
             fprintf(fo, "  js_std_eval_binary(ctx, %s, %s_size, %s);\n",
                     e->name, e->name,
-                    e->flags ? "JS_EVAL_BINARY_LOAD_ONLY" : "0");
+                    e->flags ? "1" : "0");
         }
         fputs(main_c_template2, fo);
     }
