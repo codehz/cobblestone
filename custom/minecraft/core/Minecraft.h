@@ -1,5 +1,5 @@
 #pragma once
-
+#include<string>
 class EntityRegistry;
 
 class IEntityRegistryOwner {
@@ -16,7 +16,10 @@ class RakNetServerLocator;
 class StructureManager;
 class Timer;
 class Level;
-
+class ServerNetworkHandler{
+public:
+  void disconnectClient(NetworkIdentifier const&, std::string const&, bool); //def false?
+}
 class Minecraft : public IEntityRegistryOwner {
 public:
   MinecraftCommands *getCommands();
@@ -30,6 +33,8 @@ public:
   StructureManager *getStructureManager();
   Timer *getTimer();
   Level *getLevel() const;
+  ServerNetworkHandler *getNetEventCallback();
   virtual ~Minecraft();
   virtual EntityRegistry &getEntityRegistry();
+  
 };

@@ -21,4 +21,5 @@ public:
   BlockLegacy *getLegacyBlock() const;
   MakeAccessor(getTag, CompoundTag, 80);
   MakeAccessor(getLegacy, BlockLegacy *, 16);
+  bool isContainerBlock() const;
 };
